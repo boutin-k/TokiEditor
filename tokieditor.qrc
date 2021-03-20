@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/copy.png</file>
+        <file>images/cut.png</file>
+        <file>images/new.png</file>
+        <file>images/open.png</file>
+        <file>images/paste.png</file>
+        <file>images/save.png</file>
+        <file>images/grid.png</file>
+        <file>images/myappico.ico</file>
+        <file>images/startIcon.png</file>
+        <file>images/egg.png</file>
+        <file>images/selection/ground.png</file>
+        <file>images/selection/foreground.png</file>
+        <file>images/selection/background.png</file>
+        <file>images/actions/teleport.png</file>
+        <file>images/actions/crate.png</file>
+        <file>images/actions/bridge.png</file>
+        <file>images/actions/bloc.png</file>
+    </qresource>
+</RCC>
