@@ -88,7 +88,18 @@ class MdiChild : public QWidget
 
   levelData _data;
 
-  QList<QPair<uint32_t, QSharedPointer<QPixmap>>> wallpaperList;
+  //  QList<QPair<uint32_t, QSharedPointer<QPixmap>>> wallpaperList;
+  struct shoeboxData {
+    int x{0};
+    int y{0};
+    int z{0};
+    QImage i;
+
+    shoeboxData() {}
+    shoeboxData(int x, int y, int z, QImage i)
+        : x(x), y(y), z(z), i(std::move(i)) {}
+  };
+  std::list<shoeboxData> shoeboxList;
 };
 
 #endif

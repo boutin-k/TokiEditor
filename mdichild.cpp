@@ -8,7 +8,7 @@
 MdiChild::MdiChild() {
   setAttribute(Qt::WA_DeleteOnClose);
   setWindowIcon(QIcon(":/images/myappico.ico"));
-
+//QStackedLayout
   setLayout(&_gridLayout);
   _gridLayout.setSizeConstraint(QLayout::SetMinAndMaxSize);
   _gridLayout.setSpacing(0);
@@ -16,21 +16,23 @@ MdiChild::MdiChild() {
 
 void MdiChild::paintEvent(QPaintEvent * event) {
   QPainter painter(this);
-  for (const auto& pair : wallpaperList)
-    painter.drawPixmap(0, 0, *pair.second.get());
+  for (const auto &item : shoeboxList) {
+    int x = item.x + (_data.gridWidth << 4) - (item.i.width() >> 1);
+    int y = item.y + (_data.gridHeight << 4) - (item.i.height() >> 1);
+    painter.drawImage(x, y, item.i);
+  }
   QWidget::paintEvent(event);
 }
 
 void MdiChild::updateBackground() {
   if (*_data.backFile != 0) {
-    wallpaperList.clear();
+    shoeboxList.clear();
 
-    parseDom(getDomDocument(_data.backFile).documentElement());
-    std::sort(wallpaperList.begin(), wallpaperList.end(),
-              [](QPair<uint32_t, QSharedPointer<QPixmap>> const &x,
-                 QPair<uint32_t, QSharedPointer<QPixmap>> const &y) {
-                return x.first < y.first;
-              });
+    QDomElement domElement = getDomDocument(_data.backFile).documentElement();
+    parseDom(domElement.firstChildElement("background"));
+
+//    parseDom(getDomDocument(_data.backFile).documentElement());
+    shoeboxList.sort([](const auto& a, const auto& b) {return a.z < b.z;});
     repaint();
   }
 }
@@ -64,24 +66,16 @@ QDomDocument MdiChild::getDomDocument(const QString &fileName) {
 
 void MdiChild::parseDom(const QDomElement &docElem) {
   if (docElem.tagName() == "plane") {
-    QPixmap pixmap(docElem.attribute("texture"));
-//    pixmap.scaledToWidth(docElem.attribute("width").toInt());
-//    pixmap.scaledToHeight(docElem.attribute("height").toInt());
+    QImage image(docElem.attribute("texture"));
+    image = image.scaled(docElem.attribute("width").toInt(),
+                         docElem.attribute("height").toInt(),
+                         Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+                 .transformed(QTransform().rotate(-docElem.attribute("rotation").toDouble()),
+                             Qt::SmoothTransformation);
 
-    int rotate = docElem.attribute("rotation").toInt();
-    int x = docElem.attribute("x").toInt();
-    int y = docElem.attribute("y").toInt();
-    int z = docElem.attribute("z").toInt();
-    qreal scaleX = docElem.attribute("width").toDouble()/pixmap.width();
-    qreal scaleY = docElem.attribute("height").toDouble()/pixmap.height();
-
-    QTransform transform;
-
-    transform = transform.translate(x, y).scale(scaleX, scaleY).rotate(rotate);
-    QPixmap *transPixmap = new QPixmap(pixmap.transformed(transform, Qt::SmoothTransformation));
-    QPair<uint32_t, QSharedPointer<QPixmap>> pair(
-        z, QSharedPointer<QPixmap>(transPixmap));
-    wallpaperList.append(pair);
+    shoeboxList.push_back(shoeboxData{
+        docElem.attribute("x").toInt(), docElem.attribute("y").toInt(),
+        docElem.attribute("z").toInt(), image});
     return;
   }
 
