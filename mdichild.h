@@ -7,9 +7,22 @@
 #include <QWidget>
 #include <QGridLayout>
 #include <QDomDocument>
+#include <QStackedLayout>
+#include <QFileSystemWatcher>
 
 #include "tkdata.h"
 #include "tkgriditem.h"
+
+struct shoeboxData {
+  int x{0};
+  int y{0};
+  int z{0};
+  QImage i;
+
+  shoeboxData() {}
+  shoeboxData(int x, int y, int z, QImage i)
+      : x(x), y(y), z(z), i(std::move(i)) {}
+};
 
 class MdiChild : public QWidget
 {
@@ -17,6 +30,7 @@ class MdiChild : public QWidget
 
  public:
   MdiChild();
+  virtual ~MdiChild();
 
   void newFile();
   bool loadFile(const QString &fileName);
@@ -31,6 +45,9 @@ class MdiChild : public QWidget
   inline QString currentFile() { return _curFile; }
 
   void updateGrid(const QMap<TkLayer, bool>& visibility);
+  inline void updateShoeboxState(bool enabled) {
+    overlay->setVisible(shoeboxDisplayed = enabled);
+  }
 
   inline void setData(const levelData &d) {
     bool update = std::strcmp(d.backFile, _data.backFile);
@@ -38,7 +55,7 @@ class MdiChild : public QWidget
       _data = d;
       setModified(true);
     }
-    if (update) updateBackground();
+    if (update) updateShoebox();
   }
   inline const levelData& getData() { return _data; }
 
@@ -75,12 +92,37 @@ class MdiChild : public QWidget
   QString strippedName(const QString &fullFileName);
 
   QDomDocument getDomDocument(const QString &fileName);
-  void parseDom(const QDomElement &docElem);
+  static void parseDom(const QDomElement &docElem, std::list<shoeboxData>& list);
 
-  void updateBackground();
+  void updateShoebox();
+
+  class Overlay : public QWidget {
+   public:
+    Overlay(QWidget *parent = nullptr) : QWidget(parent) {
+      setAttribute(Qt::WA_TransparentForMouseEvents);
+    };
+
+    inline void updateShoebox(const std::list<shoeboxData> &shoebox,
+                              const QSize &s) {
+      overlay = std::move(shoebox);
+      size = s;
+      repaint();
+    }
+
+   protected:
+    void paintEvent(QPaintEvent *event) override;
+
+   private:
+    std::list<shoeboxData> overlay;
+    QSize size{0,0};
+  };
+
 
   QString _curFile;
   QGridLayout _gridLayout;
+  QStackedLayout mStackLayout;
+
+
   TkGridItem *tokiTile{nullptr};
 
   bool _isUntitled{true};
@@ -88,18 +130,11 @@ class MdiChild : public QWidget
 
   levelData _data;
 
-  //  QList<QPair<uint32_t, QSharedPointer<QPixmap>>> wallpaperList;
-  struct shoeboxData {
-    int x{0};
-    int y{0};
-    int z{0};
-    QImage i;
-
-    shoeboxData() {}
-    shoeboxData(int x, int y, int z, QImage i)
-        : x(x), y(y), z(z), i(std::move(i)) {}
-  };
+  Overlay* overlay{nullptr};
+  bool shoeboxDisplayed{true};
   std::list<shoeboxData> shoeboxList;
+  std::list<shoeboxData> overlayList;
+  QFileSystemWatcher mFileWatcher;
 };
 
 #endif

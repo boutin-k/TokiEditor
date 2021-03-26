@@ -17,5 +17,6 @@
         <file>images/actions/crate.png</file>
         <file>images/actions/bridge.png</file>
         <file>images/actions/bloc.png</file>
+        <file>images/selection/shoebox.png</file>
     </qresource>
 </RCC>

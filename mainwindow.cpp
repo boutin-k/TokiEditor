@@ -98,7 +98,7 @@ bool MainWindow::loadFile(const QString &fileName)
   MdiChild *child = createMdiChild();
   const bool succeeded = child->loadFile(fileName);
   if (succeeded) {
-    QLayout *childLayout = child->layout();
+    QLayout *childLayout = child->findChild<QWidget *>("Grid")->layout();
 
     for (int idx = 0; idx < childLayout->count(); ++idx) {
       TkGridItem *item =
@@ -270,6 +270,7 @@ void MainWindow::updateMenus()
   groundAct->setEnabled(hasMdiChild);
   foregroundAct->setEnabled(hasMdiChild);
   backgroundAct->setEnabled(hasMdiChild);
+  shoeboxAct->setEnabled(hasMdiChild);
   settingsAct->setEnabled(hasMdiChild);
   closeAct->setEnabled(hasMdiChild);
   closeAllAct->setEnabled(hasMdiChild);
@@ -610,6 +611,13 @@ void MainWindow::createActions()
     backgroundAct->setCheckable(true);
     backgroundAct->setChecked(true);
     selectionToolBar->addAction(backgroundAct);
+
+    const QIcon shoeboxIcon = QIcon(":/images/selection/shoebox.png");
+    shoeboxAct = new QAction(shoeboxIcon, tr("&Shoebox"), this);
+    connect(shoeboxAct, &QAction::triggered, this, &MainWindow::updateMdiShoebox);
+    shoeboxAct->setCheckable(true);
+    shoeboxAct->setChecked(true);
+    selectionToolBar->addAction(shoeboxAct);
   }
 
 #ifndef QT_NO_CLIPBOARD
@@ -797,6 +805,16 @@ void MainWindow::updateMdiChildren() {
     MdiChild *mdiChild = qobject_cast<MdiChild *>(window->widget());
     if (mdiChild != nullptr) {
       mdiChild->updateGrid(map);
+    }
+  }
+}
+
+void MainWindow::updateMdiShoebox() {
+  const QList<QMdiSubWindow *> subWindows = mdiArea->subWindowList();
+  for (QMdiSubWindow *window : subWindows) {
+    MdiChild *mdiChild = qobject_cast<MdiChild *>(window->widget());
+    if (mdiChild != nullptr) {
+      mdiChild->updateShoeboxState(shoeboxAct->isChecked());
     }
   }
 }

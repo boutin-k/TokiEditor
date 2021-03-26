@@ -1,6 +1,7 @@
 #include <QtWidgets>
 #include <QDomDocument>
 #include <QSharedPointer>
+#include <QTimer>
 
 #include "mdichild.h"
 #include "tkgriditem.h"
@@ -8,37 +9,76 @@
 MdiChild::MdiChild() {
   setAttribute(Qt::WA_DeleteOnClose);
   setWindowIcon(QIcon(":/images/myappico.ico"));
-//QStackedLayout
-  setLayout(&_gridLayout);
-  _gridLayout.setSizeConstraint(QLayout::SetMinAndMaxSize);
-  _gridLayout.setSpacing(0);
+
+  mStackLayout.setStackingMode(QStackedLayout::StackAll);
+  {
+    QWidget *gridWidget = new QWidget(this);
+    gridWidget->setObjectName("Grid");
+    gridWidget->setLayout(&_gridLayout);
+    _gridLayout.setSizeConstraint(QLayout::SetMinAndMaxSize);
+    _gridLayout.setSpacing(0);
+    mStackLayout.addWidget(gridWidget);
+
+    overlay = new Overlay(this);
+    mStackLayout.addWidget(overlay);
+    overlay->raise();
+  }
+  setLayout(&mStackLayout);
+
+  connect(&mFileWatcher, &QFileSystemWatcher::fileChanged,
+          [this]() { QTimer::singleShot(2000, this, &MdiChild::updateShoebox); });
+}
+
+MdiChild::~MdiChild() { mFileWatcher.disconnect();
 }
 
 void MdiChild::paintEvent(QPaintEvent * event) {
+  if (shoeboxDisplayed) {
+    int w = _data.gridWidth << 4;
+    int h = _data.gridHeight << 4;
+
+    QPainter painter(this);
+    for (const auto &item : shoeboxList) {
+      int x = item.x + w - (item.i.width() >> 1);
+      int y = item.y + h - (item.i.height() >> 1);
+      painter.drawImage(x, y, item.i);
+    }
+  }
+  QWidget::paintEvent(event);
+}
+
+void MdiChild::Overlay::paintEvent(QPaintEvent * event) {
   QPainter painter(this);
-  for (const auto &item : shoeboxList) {
-    int x = item.x + (_data.gridWidth << 4) - (item.i.width() >> 1);
-    int y = item.y + (_data.gridHeight << 4) - (item.i.height() >> 1);
+  for (const auto &item : overlay) {
+    int x = item.x + size.width() - (item.i.width() >> 1);
+    int y = item.y + size.height() - (item.i.height() >> 1);
     painter.drawImage(x, y, item.i);
   }
   QWidget::paintEvent(event);
 }
 
-void MdiChild::updateBackground() {
+void MdiChild::updateShoebox() {
   if (*_data.backFile != 0) {
-    shoeboxList.clear();
-
+    mFileWatcher.addPath(_data.backFile);
     QDomElement domElement = getDomDocument(_data.backFile).documentElement();
-    parseDom(domElement.firstChildElement("background"));
 
-//    parseDom(getDomDocument(_data.backFile).documentElement());
+    shoeboxList.clear();
+    parseDom(domElement.firstChildElement("background"), shoeboxList);
     shoeboxList.sort([](const auto& a, const auto& b) {return a.z < b.z;});
+
+    overlayList.clear();
+    parseDom(domElement.firstChildElement("foreground"), overlayList);
+    overlayList.sort([](const auto &a, const auto &b) { return a.z < b.z; });
+
+    QSize gridSize{(int)(_data.gridWidth << 4), (int)(_data.gridHeight << 4)};
+    overlay->updateShoebox(overlayList, gridSize);
+
     repaint();
   }
 }
 
 void MdiChild::updateGrid(const QMap<TkLayer, bool> &visibility) {
-  for (QObject *widget : this->children()) {
+  for (QObject *widget : _gridLayout.parentWidget()->children()) {
     TkGridItem *item = qobject_cast<TkGridItem *>(widget);
     if (item != nullptr) item->updateLayerVisibility(visibility);
   }
@@ -50,7 +90,7 @@ void MdiChild::updateGrid(const QMap<TkLayer, bool> &visibility) {
 }
 
 QDomDocument MdiChild::getDomDocument(const QString &fileName) {
-  QDomDocument doc("wallpaper");
+  QDomDocument doc("shoebox");
   QFile file(fileName);
   if (!file.open(QIODevice::ReadOnly)) {
     QMessageBox::warning(
@@ -64,7 +104,7 @@ QDomDocument MdiChild::getDomDocument(const QString &fileName) {
   return doc;
 }
 
-void MdiChild::parseDom(const QDomElement &docElem) {
+void MdiChild::parseDom(const QDomElement &docElem, std::list<shoeboxData>& list) {
   if (docElem.tagName() == "plane") {
     QImage image(docElem.attribute("texture"));
     image = image.scaled(docElem.attribute("width").toInt(),
@@ -73,9 +113,9 @@ void MdiChild::parseDom(const QDomElement &docElem) {
                  .transformed(QTransform().rotate(-docElem.attribute("rotation").toDouble()),
                              Qt::SmoothTransformation);
 
-    shoeboxList.push_back(shoeboxData{
+    list.push_back(shoeboxData{
         docElem.attribute("x").toInt(), docElem.attribute("y").toInt(),
-        docElem.attribute("z").toInt(), image});
+        docElem.attribute("z").toInt(), std::move(image)});
     return;
   }
 
@@ -83,7 +123,7 @@ void MdiChild::parseDom(const QDomElement &docElem) {
   while (!n.isNull()) {
     QDomElement e = n.toElement();  // try to convert the node to an element.
     if (!e.isNull()) {
-      parseDom(e);
+      parseDom(e, list);
     }
     n = n.nextSibling();
   }
@@ -193,7 +233,7 @@ bool MdiChild::loadFile(const QString &fileName)
       item->widget()->setProperty("tile", level[i]);
     }
 
-    updateBackground();
+    updateShoebox();
 
     setCurrentFile(fileName);
     succeed = true;

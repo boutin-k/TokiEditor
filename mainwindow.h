@@ -56,6 +56,7 @@ private slots:
     void mdiChildItemHovered(TkGridItem*, QHoverEvent *);
     void activeMdiChildSettingsDialog();
     void updateMdiChildren();
+    void updateMdiShoebox();
 
 private:
     enum { MaxRecentFiles = 5 };
@@ -85,6 +86,7 @@ private:
     QAction *groundAct;
     QAction *backgroundAct;
     QAction *foregroundAct;
+    QAction *shoeboxAct;
 #ifndef QT_NO_CLIPBOARD
     QAction *cutAct;
     QAction *copyAct;
