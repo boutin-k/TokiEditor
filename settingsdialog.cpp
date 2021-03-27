@@ -18,9 +18,9 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent), buttonBox(QDi
   {
     QTabWidget *tabWidget = new QTabWidget(this);
     {
-      tabWidget->addTab(buildPathTab(), tr("Paths"));  // Chemins
-      tabWidget->addTab(buildSizeTab(), tr("Size"));  // Dimensions
-      tabWidget->addTab(buildActionTab(), tr("Actions"));  // Actions
+      tabWidget->addTab(buildPathTab(), tr("Paths"));
+      tabWidget->addTab(buildSizeTab(), tr("Size"));
+      tabWidget->addTab(buildActionTab(), tr("Actions"));
     }
 
     mainLayout->addWidget(tabWidget);
@@ -107,11 +107,10 @@ QWidget *SettingsDialog::buildSizeTab() {
   QVBoxLayout *sizeLayout = new QVBoxLayout(new QWidget);
   {
     QLabel *levelSizeLabel = new QLabel(
-        tr("<font color='#7f7f7f'><b>Level Size:</b></font>"));  // Taille du
-                                                                 // plateau
+        tr("<font color='#7f7f7f'><b>Level Size:</b></font>"));
     sizeLayout->addWidget(levelSizeLabel);
 
-    QLabel *levelWidthLabel = new QLabel(tr("Width :  "));  // Largeur
+    QLabel *levelWidthLabel = new QLabel(tr("Width :  "));
     levelWidthLabel->setSizePolicy(QSizePolicy::Preferred,
                                    QSizePolicy::Preferred);
     gridWidthSpinbox.setRange(tkGridMinWidth, tkGridMaxWidth);
@@ -126,7 +125,7 @@ QWidget *SettingsDialog::buildSizeTab() {
     }
     sizeLayout->addLayout(levelHLayout);
 
-    QLabel *levelHeightLabel = new QLabel(tr("Height : "));  // Hauteur
+    QLabel *levelHeightLabel = new QLabel(tr("Height : "));
     levelHeightLabel->setSizePolicy(QSizePolicy::Preferred,
                                     QSizePolicy::Preferred);
     gridHeightSpinbox.setRange(tkGridMinHeight, tkGridMaxHeight);
@@ -142,10 +141,10 @@ QWidget *SettingsDialog::buildSizeTab() {
     sizeLayout->addLayout(levelVLayout);
 
     QLabel *levelShiftLabel = new QLabel(
-        tr("<font color='#7f7f7f'><b>Shift:</b></font>"));  // Décalage
+        tr("<font color='#7f7f7f'><b>Shift:</b></font>"));
     sizeLayout->addWidget(levelShiftLabel);
 
-    QLabel *levelXLabel = new QLabel(tr("X : "));  // X
+    QLabel *levelXLabel = new QLabel(tr("X : "));
     levelXLabel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     levelXSpinBox.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     QHBoxLayout *levelXLayout = new QHBoxLayout();
@@ -156,7 +155,7 @@ QWidget *SettingsDialog::buildSizeTab() {
     }
     sizeLayout->addLayout(levelXLayout);
 
-    QLabel *levelYLabel = new QLabel(tr("Y : "));  // Y
+    QLabel *levelYLabel = new QLabel(tr("Y : "));
     levelYLabel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     levelYSpinBox.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     QHBoxLayout *levelYLayout = new QHBoxLayout();
@@ -189,7 +188,7 @@ QWidget *SettingsDialog::buildActionTab() {
         QVBoxLayout *unlimitedLayout = new QVBoxLayout();
         {
           list[index].checkbox->setText(tr("Unlimited"));
-          connect(list[index].checkbox, &QCheckBox::stateChanged, [this, index](int state) {
+          connect(list[index].checkbox, &QCheckBox::stateChanged, this, [this, index](int state) {
             list[index].spinbox->setEnabled(state == Qt::Unchecked);
           });
           unlimitedLayout->addWidget(list[index].checkbox);

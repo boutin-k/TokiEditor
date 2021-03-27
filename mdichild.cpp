@@ -57,6 +57,15 @@ void MdiChild::Overlay::paintEvent(QPaintEvent * event) {
   QWidget::paintEvent(event);
 }
 
+void MdiChild::setData(const levelData &d) {
+  bool update = std::strcmp(d.backFile, _data.backFile);
+  if (_data != d) {
+    _data = d;
+    setModified(true);
+  }
+  if (update) updateShoebox();
+}
+
 void MdiChild::updateShoebox() {
   if (*_data.backFile != 0) {
     mFileWatcher.addPath(_data.backFile);

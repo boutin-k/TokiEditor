@@ -14,7 +14,7 @@ TkGridItem::TkGridItem(const QString& text, QWidget* parent,
     : TkLabel(text, parent, f) {
   installEventFilter(this);
   setAttribute(Qt::WA_Hover);
-  setStyleSheet(":hover {background-color: rgba(127, 127, 127, 127)};");
+  setStyleSheet(":hover {background-color: rgba(127, 127, 127, 127)}");
   drawPixmap();
 }
 

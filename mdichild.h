@@ -49,18 +49,11 @@ class MdiChild : public QWidget
     overlay->setVisible(shoeboxDisplayed = enabled);
   }
 
-  inline void setData(const levelData &d) {
-    bool update = std::strcmp(d.backFile, _data.backFile);
-    if (_data != d) {
-      _data = d;
-      setModified(true);
-    }
-    if (update) updateShoebox();
-  }
-  inline const levelData& getData() { return _data; }
+  void setData(const levelData &d);
+  inline const levelData& getData() const { return _data; }
 
   inline void setModified(bool m) { _isModified = m; documentWasModified(); }
-  inline bool isModified() { return _isModified; }
+  inline bool isModified() const { return _isModified; }
 
   inline const QString tilePath() { return _data.tileFile; }
   inline const QString eggsPath() { return _data.eggsFile; }
