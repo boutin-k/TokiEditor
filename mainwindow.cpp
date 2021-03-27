@@ -57,13 +57,15 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::newFile()
 {
   SettingsDialog *settingsDialog = new SettingsDialog(this);
-  connect(settingsDialog, &SettingsDialog::finished,
+  connect(settingsDialog, &SettingsDialog::finished, this,
           [this, settingsDialog](int result) {
             if (result == QDialog::Accepted) {
               MdiChild *child = createMdiChild();
-              child->setData(settingsDialog->getData());
-              child->newFile();
-              child->show();
+              if (nullptr != child) {
+                child->setData(settingsDialog->getData());
+                child->newFile();
+                child->show();
+              }
 
               settingsDialog->disconnect();
               settingsDialog->deleteLater();
@@ -444,7 +446,8 @@ void MainWindow::createDockWindows()
 
   scrollArea->setWidget(dockToolbox);
 
-  QPixmap *pixmap = new QPixmap("textures/tiles/forest_tiles.png");
+  QString applicationPath = QCoreApplication::applicationDirPath();
+  QPixmap *pixmap = new QPixmap(applicationPath+"/textures/tiles/forest_tiles.png");
   int spritePerLine = pixmap->width() >> 5;
   //  int nbTile = spritePerLine * (pixmap->height() >> 5);
   int nbTile = 108;
@@ -759,7 +762,7 @@ void MainWindow::activeMdiChildSettingsDialog() {
   SettingsDialog *settingsDialog = new SettingsDialog(this);
   settingsDialog->setData(child->getData());
 
-  connect(settingsDialog, &SettingsDialog::finished,
+  connect(settingsDialog, &SettingsDialog::finished, child,
           [child, settingsDialog](int result) {
             if (result == QDialog::Accepted) {
               child->setData(settingsDialog->getData());

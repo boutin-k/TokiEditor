@@ -96,6 +96,10 @@ class MdiChild : public QWidget
 
   void updateShoebox();
 
+
+  /**
+   * @brief The Overlay class
+   */
   class Overlay : public QWidget {
    public:
     Overlay(QWidget *parent = nullptr) : QWidget(parent) {

@@ -25,7 +25,7 @@ MdiChild::MdiChild() {
   }
   setLayout(&mStackLayout);
 
-  connect(&mFileWatcher, &QFileSystemWatcher::fileChanged,
+  connect(&mFileWatcher, &QFileSystemWatcher::fileChanged, this,
           [this]() { QTimer::singleShot(2000, this, &MdiChild::updateShoebox); });
 }
 
@@ -91,7 +91,9 @@ void MdiChild::updateGrid(const QMap<TkLayer, bool> &visibility) {
 
 QDomDocument MdiChild::getDomDocument(const QString &fileName) {
   QDomDocument doc("shoebox");
-  QFile file(fileName);
+
+  static const QString applicationPath = QCoreApplication::applicationDirPath()+'/';
+  QFile file(applicationPath%fileName);
   if (!file.open(QIODevice::ReadOnly)) {
     QMessageBox::warning(
         this, tr("Toki Level Editor"),
@@ -144,9 +146,6 @@ void MdiChild::buildGrid() {
     connect(label, &TkLabel::mouseHoverEvent, this,
             &MdiChild::mouseHoverEvent);
   }
-  adjustSize();
-  layout()->invalidate();
-  repaint();
 }
 
 void MdiChild::mouseButtonEvent(QWidget *w, QMouseEvent *ev) {
