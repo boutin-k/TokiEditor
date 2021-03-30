@@ -18,7 +18,6 @@ class TkLabel : public QLabel
   ~TkLabel();
 
   Q_SIGNAL void mouseButtonEvent(TkLabel *, QMouseEvent *);
-  Q_SIGNAL void mouseHoverEvent(TkLabel *, QHoverEvent *);
 
  private:
   bool eventFilter(QObject *obj, QEvent *event) Q_DECL_OVERRIDE;

@@ -1,29 +1,37 @@
 #include <QtWidgets>
 #include <QDomDocument>
 #include <QSharedPointer>
+#include <QStackedLayout>
 #include <QTimer>
 
 #include "mdichild.h"
 #include "tkgriditem.h"
+#include "tkgridlayout.h"
 
 MdiChild::MdiChild() {
   setAttribute(Qt::WA_DeleteOnClose);
   setWindowIcon(QIcon(":/images/myappico.ico"));
 
-  mStackLayout.setStackingMode(QStackedLayout::StackAll);
+  QStackedLayout* stackLayout = new QStackedLayout;
+  stackLayout->setStackingMode(QStackedLayout::StackAll);
   {
-    QWidget *gridWidget = new QWidget(this);
-    gridWidget->setObjectName("Grid");
-    gridWidget->setLayout(&_gridLayout);
-    _gridLayout.setSizeConstraint(QLayout::SetMinAndMaxSize);
-    _gridLayout.setSpacing(0);
-    mStackLayout.addWidget(gridWidget);
+    gridWidget = new QWidget(this);
+    {
+      gridWidget->setObjectName("Grid");
+      gridLayout = new TkGridLayout();
+      {
+        gridLayout->setSizeConstraint(QLayout::SetMinAndMaxSize);
+        gridLayout->setSpacing(0);
+      }
+      gridWidget->setLayout(gridLayout);
+    }
+    stackLayout->addWidget(gridWidget);
 
     overlay = new Overlay(this);
-    mStackLayout.addWidget(overlay);
+    stackLayout->addWidget(overlay);
     overlay->raise();
   }
-  setLayout(&mStackLayout);
+  setLayout(stackLayout);
 
   connect(&mFileWatcher, &QFileSystemWatcher::fileChanged, this,
           [this]() { QTimer::singleShot(2000, this, &MdiChild::updateShoebox); });
@@ -60,7 +68,38 @@ void MdiChild::Overlay::paintEvent(QPaintEvent * event) {
 void MdiChild::setData(const levelData &d) {
   bool update = std::strcmp(d.backFile, _data.backFile);
   if (_data != d) {
+    // clang-format off
+    int16_t  x = (d.gridWidth  >> 16) & 0xFFFF;
+    int16_t  y = (d.gridHeight >> 16) & 0xFFFF;
+    uint32_t w = (d.gridWidth  & 0xFFFF);
+    uint32_t h = (d.gridHeight & 0xFFFF);
+    // clang-format on
+
+    auto func = std::bind(&MdiChild::getNewGridItem, this);
+
+    if (w > _data.gridWidth) {
+      gridLayout->addColumn(w - _data.gridWidth, func);
+      if (x != 0) gridLayout->shiftColumn(x, func);
+    } else if (w < _data.gridWidth) {
+      if (x != 0) gridLayout->shiftColumn(x, func);
+      gridLayout->removeColumn(_data.gridWidth-w);
+    } else if (x != 0) {
+      gridLayout->shiftColumn(x, func);
+    }
+
+    if (h > _data.gridHeight) {
+      gridLayout->addRow(h - _data.gridHeight, func);
+      if (y != 0) gridLayout->shiftRow(y, func);
+    } else if (h < _data.gridHeight) {
+      if (y != 0) gridLayout->shiftRow(y, func);
+      gridLayout->removeRow(_data.gridHeight-h);
+    } else if (y != 0) {
+      gridLayout->shiftRow(y, func);
+    }
+
     _data = d;
+    _data.gridWidth &= 0xFFFF;
+    _data.gridHeight &= 0xFFFF;
     setModified(true);
   }
   if (update) updateShoebox();
@@ -87,15 +126,10 @@ void MdiChild::updateShoebox() {
 }
 
 void MdiChild::updateGrid(const QMap<TkLayer, bool> &visibility) {
-  for (QObject *widget : _gridLayout.parentWidget()->children()) {
+  for (QObject *widget : gridWidget->children()) {
     TkGridItem *item = qobject_cast<TkGridItem *>(widget);
     if (item != nullptr) item->updateLayerVisibility(visibility);
   }
-//  GridLayoutUtil::removeColumn(&_gridLayout, 0);
-//  GridLayoutUtil::removeColumn(&_gridLayout, 1);
-//  GridLayoutUtil::removeColumn(&_gridLayout, 2);
-//  GridLayoutUtil::removeColumn(&_gridLayout, 3);
-//  GridLayoutUtil::removeColumn(&_gridLayout, 4);
 }
 
 QDomDocument MdiChild::getDomDocument(const QString &fileName) {
@@ -143,30 +177,67 @@ void MdiChild::parseDom(const QDomElement &docElem, std::list<shoeboxData>& list
 void MdiChild::buildGrid() {
   ulong nbTiles = _data.getTileNumber();
   for (ulong i = 0U; i < nbTiles; ++i) {
-    TkGridItem *label = new TkGridItem(this);
-    uint32_t x = i % _data.gridWidth;
-    uint32_t y = i / _data.gridWidth;
-    label->setProperty("tile", 0xFF);
-    label->setProperty("x", x);
-    label->setProperty("y", y);
-    _gridLayout.addWidget(label, y, x);
-    connect(label, &TkLabel::mouseButtonEvent, this,
-            &MdiChild::mouseButtonEvent);
-    connect(label, &TkLabel::mouseHoverEvent, this,
-            &MdiChild::mouseHoverEvent);
+    uint32_t col = i % _data.gridWidth;
+    uint32_t row = i / _data.gridWidth;
+    TkGridItem *item = getNewGridItem();
+    item->setProperty("col", col);
+    item->setProperty("row", row);
+    gridLayout->addWidget(item, row, col);
   }
+}
+
+TkGridItem *MdiChild::getNewGridItem() {
+  TkGridItem *label = new TkGridItem(this);
+  connect(label, &TkLabel::mouseButtonEvent, this, &MdiChild::mouseButtonEvent);
+  return label;
 }
 
 void MdiChild::mouseButtonEvent(QWidget *w, QMouseEvent *ev) {
-  if (ev->type() == QEvent::MouseButtonPress) {
-    emit itemClicked(static_cast<TkGridItem *>(w), ev);
-  }
-}
+  switch (ev->type()) {
+    // Press
+    case QEvent::MouseButtonPress: {
+      emit itemClicked(static_cast<TkGridItem *>(w), ev->button());
+      if (ev->button() == Qt::LeftButton) _isLeftMouseButtonPressed = true;
+      if (ev->button() == Qt::RightButton) _isRightMouseButtonPressed = true;
+      break;
+    }
+    // Release
+    case QEvent::MouseButtonRelease: {
+      if (ev->button() == Qt::LeftButton) _isLeftMouseButtonPressed = false;
+      if (ev->button() == Qt::RightButton) _isRightMouseButtonPressed = false;
+      break;
+    }
+    // Move
+    case QEvent::MouseMove: {
+      static QPoint lastCoord{-1, -1};
 
-void MdiChild::mouseHoverEvent(QWidget *w, QHoverEvent *ev) {
-  if (ev->type() == QEvent::HoverEnter ||
-      ev->type() == QEvent::HoverLeave) {
-    emit itemHovered(static_cast<TkGridItem *>(w), ev);
+      if (_isLeftMouseButtonPressed || _isRightMouseButtonPressed) {
+        QWidget *widget = qApp->widgetAt(QCursor::pos());
+        if (widget != nullptr) {
+          QVariant colVar(widget->property("col"));
+          QVariant rowVar(widget->property("row"));
+          if (colVar.isValid() && rowVar.isValid()) {
+            int curCol = colVar.toInt();
+            int curRow = rowVar.toInt();
+            if (lastCoord != QPoint{curCol, curRow}) {
+              lastCoord = {curCol, curRow};
+              // clang-format off
+              emit itemClicked(static_cast<TkGridItem *>(widget),
+                               (_isLeftMouseButtonPressed)  ? Qt::LeftButton  :
+                               (_isRightMouseButtonPressed) ? Qt::RightButton :
+                                                              Qt::NoButton);
+              // clang-format on
+            }
+          }
+        }
+      } else {
+        // Reset the last coordinates
+        lastCoord = {-1, -1};
+      }
+      break;
+    }
+    default:
+      break;
   }
 }
 
@@ -237,7 +308,7 @@ bool MdiChild::loadFile(const QString &fileName)
 
     for (ulong i = 0ULL; i < nbTiles; ++i) {
       QLayoutItem *item =
-          _gridLayout.itemAtPosition(i / _data.gridWidth, i % _data.gridWidth);
+          gridLayout->itemAtPosition(i / _data.gridWidth, i % _data.gridWidth);
       item->widget()->setProperty("tile", level[i]);
     }
 
@@ -289,7 +360,7 @@ bool MdiChild::saveFile(const QString &fileName)
       // Write map content
       std::vector<uint32_t> levelMap(_data.getTileNumber(), 0xFF);
       for (ulong i = 0ULL; i < levelMap.size(); ++i) {
-        QLayoutItem *item = _gridLayout.itemAtPosition(i / _data.gridWidth,
+        QLayoutItem *item = gridLayout->itemAtPosition(i / _data.gridWidth,
                                                        i % _data.gridWidth);
         levelMap[i] = item->widget()->property("tile").toUInt();
       }

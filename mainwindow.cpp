@@ -111,25 +111,25 @@ bool MainWindow::loadFile(const QString &fileName)
           uint32_t groundTile = tile & 0xFF;
           if (groundTile < 0xFD) {
             item->updatePixmapLayer(
-                dockItems[groundTile]->pixmap(Qt::ReturnByValue), 0, groundTile,
+                dockItems[groundTile]->pixmap(Qt::ReturnByValue), TkLayer::ground, groundTile,
                 true);
           } else if (groundTile == 0xFD) {
-            item->updatePixmapLayer(QPixmap(":/images/startIcon.png"), 0,
+            item->updatePixmapLayer(QPixmap(":/images/startIcon.png"), TkLayer::ground,
                                     groundTile, true);
             child->setTokiTile(item);
           } else if (groundTile == 0xFE) {
-            item->updatePixmapLayer(QPixmap(":/images/egg.png"), 0, groundTile, true);
+            item->updatePixmapLayer(QPixmap(":/images/egg.png"), TkLayer::ground, groundTile, true);
           }
 
           uint32_t backTile = (tile & 0xFF00) >> 8;
           if (backTile)
             item->updatePixmapLayer(
-                dockItems[backTile]->pixmap(Qt::ReturnByValue), 1, backTile, true);
+                dockItems[backTile]->pixmap(Qt::ReturnByValue), TkLayer::background, backTile, true);
 
           uint32_t frontTile = (tile & 0xFF0000) >> 16;
           if (frontTile)
             item->updatePixmapLayer(
-                dockItems[frontTile]->pixmap(Qt::ReturnByValue), 2, frontTile, true);
+                dockItems[frontTile]->pixmap(Qt::ReturnByValue), TkLayer::foreground, frontTile, true);
         }
       }
     }
@@ -329,14 +329,16 @@ void MainWindow::updateWindowMenu()
   }
 }
 
-void MainWindow::mdiChildItemClicked(TkGridItem *item, QMouseEvent *ev) {
+void MainWindow::mdiChildItemClicked(TkGridItem *item, Qt::MouseButton button) {
+  if (activeMdiChild() == nullptr) return;
+
   int index = dockToolbox->currentIndex();
   if (index < 0) return;
 
   // Entities are on the ground layer
   if (index == 3) index = 0;
 
-  switch (ev->button()) {
+  switch (button) {
     case Qt::LeftButton: {
       if (_selectedDockTile != nullptr) {
         uint32_t tile = _selectedDockTile->property("id").toUInt();
@@ -370,37 +372,12 @@ void MainWindow::mdiChildItemClicked(TkGridItem *item, QMouseEvent *ev) {
   }
 }
 
-void MainWindow::mdiChildItemHovered(TkGridItem * /*item*/,
-                                     QHoverEvent * /*ev*/) {
-//  static QHash<TkGridItem *, QPixmap> list;
-
-//  if (ev->type() == QEvent::HoverEnter) {
-//    QPixmap pixmap = item->pixmap(Qt::ReturnByValue);
-//    QPixmap tempPixmap = pixmap;
-//    list.insert(item, tempPixmap);
-
-//    QPainter painter;
-//    painter.begin(&tempPixmap);
-//    painter.fillRect(pixmap.rect(), QColor(127, 127, 127, 127));
-//    painter.end();
-
-//    item->setPixmap(tempPixmap);
-//  }
-
-
-//  if (ev->type() == QEvent::HoverLeave) {
-//    item->setPixmap(*list.find(item));
-//  }
-}
-
 MdiChild *MainWindow::createMdiChild()
 {
   MdiChild *child = new MdiChild;
   mdiArea->addSubWindow(child);
   connect(child, &MdiChild::itemClicked, this,
           &MainWindow::mdiChildItemClicked);
-  connect(child, &MdiChild::itemHovered, this,
-          &MainWindow::mdiChildItemHovered);
 
 //#ifndef QT_NO_CLIPBOARD
 //    connect(child, &QTextEdit::copyAvailable, cutAct, &QAction::setEnabled);
@@ -415,7 +392,7 @@ void MainWindow::createDockWindows()
   dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
   dock->setFeatures(QDockWidget::DockWidgetMovable |
                     QDockWidget::DockWidgetFloatable);
-  dock->setMinimumWidth(113); // 267
+  dock->setMinimumWidth(113);
   dock->setMaximumWidth(281);
 
   QSizePolicy policy(dock->sizePolicy());
@@ -433,11 +410,11 @@ void MainWindow::createDockWindows()
   FlowLayout* groundLayout = new FlowLayout(new QWidget(dockToolbox));
   dockToolbox->addItem(groundLayout->parentWidget(), tr("ground"));
 
-  FlowLayout* foregroundtLayout = new FlowLayout(new QWidget(dockToolbox));
-  dockToolbox->addItem(foregroundtLayout->parentWidget(), tr("foreground"));
-
   FlowLayout* backgroundLayout = new FlowLayout(new QWidget(dockToolbox));
   dockToolbox->addItem(backgroundLayout->parentWidget(), tr("background"));
+
+  FlowLayout* foregroundtLayout = new FlowLayout(new QWidget(dockToolbox));
+  dockToolbox->addItem(foregroundtLayout->parentWidget(), tr("foreground"));
 
   FlowLayout *entityLayout = new FlowLayout(new QWidget(dockToolbox));
   dockToolbox->addItem(entityLayout->parentWidget(), tr("entity"));

@@ -5,13 +5,13 @@
 
 #include <QMap>
 #include <QWidget>
-#include <QGridLayout>
 #include <QDomDocument>
-#include <QStackedLayout>
 #include <QFileSystemWatcher>
 
 #include "tkdata.h"
 #include "tkgriditem.h"
+
+class TkGridLayout;
 
 struct shoeboxData {
   int x{0};
@@ -64,10 +64,8 @@ class MdiChild : public QWidget
   inline TkGridItem *getTokiTile() const { return tokiTile; }
   inline void setTokiTile(TkGridItem *tile) { tokiTile = tile; }
 
-
  signals:
-  void itemClicked(TkGridItem*, QMouseEvent*);
-  void itemHovered(TkGridItem*, QHoverEvent*);
+  void itemClicked(TkGridItem*, Qt::MouseButton);
 
  protected:
   void closeEvent(QCloseEvent *event) override;
@@ -76,10 +74,11 @@ class MdiChild : public QWidget
  private slots:
   void documentWasModified();
   void mouseButtonEvent(QWidget *w, QMouseEvent *ev);
-  void mouseHoverEvent(QWidget *w, QHoverEvent *ev);
 
  private:
   void buildGrid();
+  TkGridItem *getNewGridItem();
+
   bool maybeSave();
   void setCurrentFile(const QString &fileName);
   QString strippedName(const QString &fullFileName);
@@ -116,14 +115,16 @@ class MdiChild : public QWidget
 
 
   QString _curFile;
-  QGridLayout _gridLayout;
-  QStackedLayout mStackLayout;
 
+  TkGridLayout* gridLayout{nullptr};
+  QWidget* gridWidget{nullptr};
 
   TkGridItem *tokiTile{nullptr};
 
   bool _isUntitled{true};
   bool _isModified{false};
+  bool _isLeftMouseButtonPressed{false};
+  bool _isRightMouseButtonPressed{false};
 
   levelData _data;
 

@@ -14,11 +14,11 @@ TRANSLATIONS = languages/tokieditor_en.ts languages/tokieditor_fr.ts
 
 HEADERS       = mainwindow.h \
                 flowlayout.h \
-                gridlayoututil.h \
                 mdichild.h \
                 settingsdialog.h \
                 tkdata.h \
                 tkgriditem.h \
+                tkgridlayout.h \
                 tklabel.h
 SOURCES       = main.cpp \
                 flowlayout.cpp \
@@ -26,6 +26,7 @@ SOURCES       = main.cpp \
                 mdichild.cpp \
                 settingsdialog.cpp \
                 tkgriditem.cpp \
+                tkgridlayout.cpp \
                 tklabel.cpp
 RESOURCES     = \
     tokieditor.qrc

@@ -62,8 +62,8 @@ class SettingsDialog : public QDialog
     std::memcpy(data.musicFile, musicEdit.text().toStdString().c_str(),
                 musicEdit.text().size() + 1);
 
-    data.gridWidth = gridWidthSpinbox.value();
-    data.gridHeight = gridHeightSpinbox.value();
+    data.gridWidth = gridWidthSpinbox.value() | (levelXSpinBox.value() << 16);
+    data.gridHeight = gridHeightSpinbox.value() | (levelYSpinBox.value() << 16);
 
     for (uint32_t index = 0U; index < TkAction::actionCount; ++index)
       data.action[index] = getActionCounter((TkAction)index);

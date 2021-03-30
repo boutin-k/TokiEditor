@@ -52,8 +52,7 @@ private slots:
     void updateWindowMenu();
     MdiChild *createMdiChild();
 
-    void mdiChildItemClicked(TkGridItem*, QMouseEvent *);
-    void mdiChildItemHovered(TkGridItem*, QHoverEvent *);
+    void mdiChildItemClicked(TkGridItem*, Qt::MouseButton button);
     void activeMdiChildSettingsDialog();
     void updateMdiChildren();
     void updateMdiShoebox();
