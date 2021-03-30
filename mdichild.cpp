@@ -8,6 +8,8 @@
 #include "tkgriditem.h"
 #include "tkgridlayout.h"
 
+uint32_t MdiChild::sMdiChildCounter{1U};
+
 MdiChild::MdiChild() {
   setAttribute(Qt::WA_DeleteOnClose);
   setWindowIcon(QIcon(":/images/myappico.ico"));
@@ -182,6 +184,7 @@ void MdiChild::buildGrid() {
     TkGridItem *item = getNewGridItem();
     item->setProperty("col", col);
     item->setProperty("row", row);
+    item->setProperty("mdiChildId", mdiChildId);
     gridLayout->addWidget(item, row, col);
   }
 }
@@ -213,7 +216,7 @@ void MdiChild::mouseButtonEvent(QWidget *w, QMouseEvent *ev) {
 
       if (_isLeftMouseButtonPressed || _isRightMouseButtonPressed) {
         QWidget *widget = qApp->widgetAt(QCursor::pos());
-        if (widget != nullptr) {
+        if (widget != nullptr && widget->property("mdiChildId").toUInt() == mdiChildId) {
           QVariant colVar(widget->property("col"));
           QVariant rowVar(widget->property("row"));
           if (colVar.isValid() && rowVar.isValid()) {

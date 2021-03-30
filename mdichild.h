@@ -27,6 +27,7 @@ struct shoeboxData {
 class MdiChild : public QWidget
 {
   Q_OBJECT
+  static uint32_t sMdiChildCounter;
 
  public:
   MdiChild();
@@ -113,6 +114,7 @@ class MdiChild : public QWidget
     QSize size{0,0};
   };
 
+  uint32_t mdiChildId{sMdiChildCounter++};
 
   QString _curFile;
 
