@@ -2,7 +2,7 @@
 
 #include <QPainter>
 #include <QVariant>
-#include <QDebug>
+#include <QMouseEvent>
 
 constexpr uint32_t TkGridItem::layerMask[];
 
@@ -15,8 +15,16 @@ TkGridItem::TkGridItem(const QString& text, QWidget* parent,
   installEventFilter(this);
   setProperty("tile", 0xFF);
   setAttribute(Qt::WA_Hover);
-  setStyleSheet(":hover {background-color: rgba(127, 127, 127, 127)}");
+  setStyleSheet(sGreyHoverBackground);
   drawPixmap();
+
+  connect(this, &TkGridItem::mouseButtonEvent, [this] (TkLabel*, QMouseEvent* ev){
+    if (ev->type() == QEvent::MouseButtonPress)
+      return setStyleSheet(sTransHoverBackground);
+
+    if (ev->type() == QEvent::MouseButtonRelease)
+      return setStyleSheet(sGreyHoverBackground);
+  });
 }
 
 TkGridItem::~TkGridItem() {}

@@ -43,6 +43,9 @@ class TkGridItem : public TkLabel
   bool visibilityMask[TkLayer::layerCount] = {true, true, true};
 
   static constexpr uint32_t layerMask[TkLayer::layerCount] = {0xFF, 0xFF00, 0xFF0000};
+
+  static constexpr auto sTransHoverBackground{":hover {background-color: rgba(127, 127, 127, 0)}"};
+  static constexpr auto sGreyHoverBackground{":hover {background-color: rgba(127, 127, 127, 127)}"};
 };
 
 #endif // TKGRIDITEM_H
