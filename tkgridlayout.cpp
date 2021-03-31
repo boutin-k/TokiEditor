@@ -1,4 +1,7 @@
 #include "tkgridlayout.h"
+#include "tkgriditem.h"
+
+#include <QWidget>
 
 /**
  * @brief Default constructor
@@ -15,16 +18,18 @@ TkGridLayout::TkGridLayout(QWidget *parent) : QGridLayout(parent) {}
  * @brief GridLayout::shiftRow
  * @param shiftCount
  */
-void TkGridLayout::shiftRow(int shiftCount, std::function<QWidget*()> func) {
+void TkGridLayout::shiftRow(int shiftCount, callback func) {
   if (shiftCount == 0) return;
 
   if (shiftCount > 0) {
     // Shift to the bottom
-    for (int rowId = rowCount() - 1; rowId >= 0; rowId--) {
-      for (int colId = 0; colId < columnCount(); colId++) {
+    for (int rowId = itemRowCount - 1; rowId >= 0; rowId--) {
+      for (int colId = 0; colId < itemColCount; colId++) {
         QLayoutItem *item = itemAtPosition(rowId, colId);
         if (item != nullptr) {
-          if (rowId < rowCount() - shiftCount) {
+          if (rowId < itemRowCount - shiftCount) {
+            // Update row in the widget property
+            item->widget()->setProperty("row", rowId + shiftCount);
             addWidget(item->widget(), rowId + shiftCount, colId);
           } else {
             deleteChildWidgets(item);
@@ -32,26 +37,28 @@ void TkGridLayout::shiftRow(int shiftCount, std::function<QWidget*()> func) {
         }
 
         if (func && rowId < shiftCount) {
-          addWidget(func(), rowId, colId);
+          addWidget(func(rowId, colId, mdiId), rowId, colId);
         }
       }
     }
   } else {
     shiftCount *= -1;
     // Shift to the top
-    for (int rowId = 0; rowId < rowCount(); rowId++) {
-      for (int colId = 0; colId < columnCount(); colId++) {
+    for (int rowId = 0; rowId < itemRowCount; rowId++) {
+      for (int colId = 0; colId < itemColCount; colId++) {
         QLayoutItem *item = itemAtPosition(rowId, colId);
         if (item != nullptr) {
           if (rowId >= shiftCount) {
+            // Update row in the widget property
+            item->widget()->setProperty("row", rowId - shiftCount);
             addWidget(item->widget(), rowId - shiftCount, colId);
           } else {
             deleteChildWidgets(item);
           }
         }
 
-        if (func && rowId >= rowCount() - shiftCount) {
-          addWidget(func(), rowId, colId);
+        if (func && rowId >= itemRowCount - shiftCount) {
+          addWidget(func(rowId, colId, mdiId), rowId, colId);
         }
       }
     }
@@ -63,16 +70,18 @@ void TkGridLayout::shiftRow(int shiftCount, std::function<QWidget*()> func) {
  * @brief GridLayout::shiftColumn
  * @param shiftCount
  */
-void TkGridLayout::shiftColumn(int shiftCount, std::function<QWidget*()> func) {
+void TkGridLayout::shiftColumn(int shiftCount, callback func) {
   if (shiftCount == 0) return;
 
   if (shiftCount > 0) {
     // Shift to the right
-    for (int colId = columnCount() - 1; colId >= 0; colId--) {
-      for (int rowId = 0; rowId < rowCount(); rowId++) {
+    for (int colId = itemColCount - 1; colId >= 0; colId--) {
+      for (int rowId = 0; rowId < itemRowCount; rowId++) {
         QLayoutItem *item = itemAtPosition(rowId, colId);
         if (item != nullptr) {
-          if (colId < columnCount() - shiftCount) {
+          if (colId < itemColCount - shiftCount) {
+            // Update row in the widget property
+            item->widget()->setProperty("col", colId + shiftCount);
             addWidget(item->widget(), rowId, colId + shiftCount);
           } else {
             deleteChildWidgets(item);
@@ -80,26 +89,28 @@ void TkGridLayout::shiftColumn(int shiftCount, std::function<QWidget*()> func) {
         }
 
         if (func && colId < shiftCount) {
-          addWidget(func(), rowId, colId);
+          addWidget(func(rowId, colId, mdiId), rowId, colId);
         }
       }
     }
   } else {
     shiftCount *= -1;
     // Shift to the left
-    for (int colId = 0; colId < columnCount(); colId++) {
-      for (int rowId = 0; rowId < rowCount(); rowId++) {
+    for (int colId = 0; colId < itemColCount; colId++) {
+      for (int rowId = 0; rowId < itemRowCount; rowId++) {
         QLayoutItem *item = itemAtPosition(rowId, colId);
         if (item != nullptr) {
           if (colId >= shiftCount) {
+            // Update col in the widget property
+            item->widget()->setProperty("col", colId - shiftCount);
             addWidget(item->widget(), rowId, colId - shiftCount);
           } else {
             deleteChildWidgets(item);
           }
         }
 
-        if (func && colId >= columnCount() - shiftCount) {
-          addWidget(func(), rowId, colId);
+        if (func && colId >= itemColCount - shiftCount) {
+          addWidget(func(rowId, colId, mdiId), rowId, colId);
         }
       }
     }
@@ -111,26 +122,31 @@ void TkGridLayout::shiftColumn(int shiftCount, std::function<QWidget*()> func) {
  * @brief GridLayout::addRow
  * @param rowCount
  */
-void TkGridLayout::addRow(uint32_t rowCount, std::function<QWidget*()> func) {
+void TkGridLayout::addRow(uint32_t rowCount, callback func) {
   if (rowCount == 0 || !func) return;
 
-  rowCount += this->rowCount();
-  for (uint32_t rowId = this->rowCount(); rowId < rowCount; rowId++)
-    for (int colId = 0; colId < columnCount(); colId++)
-      addWidget(func(), rowId, colId);
+  rowCount += itemRowCount;
+  for (uint32_t rowId = itemRowCount; rowId < rowCount; rowId++)
+    for (int colId = 0; colId < itemColCount; colId++) {
+      addWidget(func(rowId, colId, mdiId), rowId, colId);
+    }
+  // Update the row counter
+  itemRowCount = rowCount;
 }
 
 /**
  * @brief GridLayout::addColumn
  * @param columnCount
  */
-void TkGridLayout::addColumn(uint32_t columnCount, std::function<QWidget*()> func) {
+void TkGridLayout::addColumn(uint32_t columnCount, callback func) {
   if (columnCount == 0 || !func) return;
 
-  columnCount += this->columnCount();
-  for (uint32_t colId = this->columnCount(); colId < columnCount; colId++)
-    for (int rowId = 0; rowId < rowCount(); rowId++)
-      addWidget(func(), rowId, colId);
+  columnCount += itemColCount;
+  for (uint32_t colId = itemColCount; colId < columnCount; colId++)
+    for (int rowId = 0; rowId < itemRowCount; rowId++)
+      addWidget(func(rowId, colId, mdiId), rowId, colId);
+  // Update the column counter
+  itemColCount = columnCount;
 }
 
 /**
@@ -141,11 +157,13 @@ void TkGridLayout::addColumn(uint32_t columnCount, std::function<QWidget*()> fun
 void TkGridLayout::removeRow(int row, bool deleteWidgets) {
   if (row == 0) return;
 
-  for (int rowId = rowCount() - row; rowId < rowCount(); rowId++) {
+  for (int rowId = itemRowCount - row; rowId < itemRowCount; rowId++) {
     remove(rowId, -1, deleteWidgets);
     setRowMinimumHeight(rowId, 0);
     setRowStretch(rowId, 0);
   }
+  // Update the row counter
+  itemRowCount -= row;
 }
 
 /**
@@ -156,22 +174,13 @@ void TkGridLayout::removeRow(int row, bool deleteWidgets) {
 void TkGridLayout::removeColumn(int column, bool deleteWidgets) {
   if (column == 0) return;
 
-  for (int colId = columnCount() - column; colId < columnCount();
-       colId++) {
+  for (int colId = itemColCount - column; colId < itemColCount; colId++) {
     remove(-1, colId, deleteWidgets);
     setColumnMinimumWidth(colId, 0);
     setColumnStretch(colId, 0);
   }
-}
-
-/**
- * @brief GridLayout::removeCell
- * @param row
- * @param column
- * @param deleteWidgets
- */
-void TkGridLayout::removeCell(int row, int column, bool deleteWidgets) {
-  remove(row, column, deleteWidgets);
+  // Update the row counter
+  itemColCount -= column;
 }
 
 /**
@@ -205,12 +214,12 @@ void TkGridLayout::deleteChildWidgets(QLayoutItem *item) {
   if (item == nullptr) return;
 
   QLayout *layout = item->layout();
-  if (layout) {
+  if (layout != nullptr) {
     // Process all child items recursively.
     int itemCount = count();
     for (int i = 0; i < itemCount; i++) {
       deleteChildWidgets(itemAt(i));
     }
   }
-  delete item->widget();
+  delete static_cast<TkGridItem*>(item->widget());
 }

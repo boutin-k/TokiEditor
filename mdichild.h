@@ -78,7 +78,7 @@ class MdiChild : public QWidget
 
  private:
   void buildGrid();
-  TkGridItem *getNewGridItem();
+  TkGridItem *getNewGridItem(uint32_t row, uint32_t col, uint32_t mdiId);
 
   bool maybeSave();
   void setCurrentFile(const QString &fileName);

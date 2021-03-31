@@ -22,8 +22,9 @@ MdiChild::MdiChild() {
       gridWidget->setObjectName("Grid");
       gridLayout = new TkGridLayout();
       {
-        gridLayout->setSizeConstraint(QLayout::SetMinAndMaxSize);
+        gridLayout->setSizeConstraint(QLayout::SetMinimumSize);
         gridLayout->setSpacing(0);
+        gridLayout->setMdiId(mdiChildId);
       }
       gridWidget->setLayout(gridLayout);
     }
@@ -77,7 +78,8 @@ void MdiChild::setData(const levelData &d) {
     uint32_t h = (d.gridHeight & 0xFFFF);
     // clang-format on
 
-    auto func = std::bind(&MdiChild::getNewGridItem, this);
+    using namespace std::placeholders;
+    auto func = std::bind(&MdiChild::getNewGridItem, this, _1, _2, _3);
 
     if (w > _data.gridWidth) {
       gridLayout->addColumn(w - _data.gridWidth, func);
@@ -181,18 +183,20 @@ void MdiChild::buildGrid() {
   for (ulong i = 0U; i < nbTiles; ++i) {
     uint32_t col = i % _data.gridWidth;
     uint32_t row = i / _data.gridWidth;
-    TkGridItem *item = getNewGridItem();
-    item->setProperty("col", col);
-    item->setProperty("row", row);
-    item->setProperty("mdiChildId", mdiChildId);
+    TkGridItem *item = getNewGridItem(row, col, mdiChildId);
     gridLayout->addWidget(item, row, col);
   }
+  gridLayout->refreshItemCount();
 }
 
-TkGridItem *MdiChild::getNewGridItem() {
-  TkGridItem *label = new TkGridItem(this);
-  connect(label, &TkLabel::mouseButtonEvent, this, &MdiChild::mouseButtonEvent);
-  return label;
+TkGridItem *MdiChild::getNewGridItem(uint32_t row, uint32_t col, uint32_t mdiId) {
+  TkGridItem *item = new TkGridItem(this);
+  item->setProperty("row", row);
+  item->setProperty("col", col);
+  item->setProperty("mdiId", mdiId);
+
+  connect(item, &TkLabel::mouseButtonEvent, this, &MdiChild::mouseButtonEvent);
+  return item;
 }
 
 void MdiChild::mouseButtonEvent(QWidget *w, QMouseEvent *ev) {
@@ -216,7 +220,7 @@ void MdiChild::mouseButtonEvent(QWidget *w, QMouseEvent *ev) {
 
       if (_isLeftMouseButtonPressed || _isRightMouseButtonPressed) {
         QWidget *widget = qApp->widgetAt(QCursor::pos());
-        if (widget != nullptr && widget->property("mdiChildId").toUInt() == mdiChildId) {
+        if (widget != nullptr && widget->property("mdiId").toUInt() == mdiChildId) {
           QVariant colVar(widget->property("col"));
           QVariant rowVar(widget->property("row"));
           if (colVar.isValid() && rowVar.isValid()) {
