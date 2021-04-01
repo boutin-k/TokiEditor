@@ -131,7 +131,7 @@ void TkGridLayout::addRow(uint32_t rowCount, callback func) {
       addWidget(func(rowId, colId, mdiId), rowId, colId);
     }
   // Update the row counter
-  itemRowCount = rowCount;
+  emit rowCountChanged(itemRowCount = rowCount);
 }
 
 /**
@@ -146,7 +146,7 @@ void TkGridLayout::addColumn(uint32_t columnCount, callback func) {
     for (int rowId = 0; rowId < itemRowCount; rowId++)
       addWidget(func(rowId, colId, mdiId), rowId, colId);
   // Update the column counter
-  itemColCount = columnCount;
+  emit colCountChanged(itemColCount = columnCount);
 }
 
 /**
@@ -163,7 +163,7 @@ void TkGridLayout::removeRow(int row, bool deleteWidgets) {
     setRowStretch(rowId, 0);
   }
   // Update the row counter
-  itemRowCount -= row;
+  emit rowCountChanged(itemRowCount -= row);
 }
 
 /**
@@ -180,7 +180,7 @@ void TkGridLayout::removeColumn(int column, bool deleteWidgets) {
     setColumnStretch(colId, 0);
   }
   // Update the row counter
-  itemColCount -= column;
+  emit colCountChanged(itemColCount -= column);
 }
 
 /**

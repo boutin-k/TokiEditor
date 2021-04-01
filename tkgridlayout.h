@@ -6,6 +6,8 @@
 
 class TkGridLayout : public QGridLayout
 {
+  Q_OBJECT
+
   using callback = std::function<QWidget *(uint32_t, uint32_t, uint32_t)>;
 
  public:
@@ -19,11 +21,18 @@ class TkGridLayout : public QGridLayout
   void removeRow(int row, bool deleteWidgets = true);
   void removeColumn(int column, bool deleteWidgets = true);
 
+
   inline void refreshItemCount() {
-    itemRowCount = rowCount();
-    itemColCount = columnCount();
+    if (itemRowCount != rowCount())
+      emit rowCountChanged(itemRowCount = rowCount());
+
+    if (itemColCount != columnCount())
+      emit colCountChanged(itemColCount = columnCount());
   }
   inline void setMdiId(uint32_t id) { mdiId = id; }
+
+  Q_SIGNAL void rowCountChanged(int);
+  Q_SIGNAL void colCountChanged(int);
 
  private:
   void remove(int row, int column, bool deleteWidgets);

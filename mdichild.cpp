@@ -22,7 +22,7 @@ MdiChild::MdiChild() {
       gridWidget->setObjectName("Grid");
       gridLayout = new TkGridLayout();
       {
-        gridLayout->setSizeConstraint(QLayout::SetMinimumSize);
+        gridLayout->setSizeConstraint(QLayout::SetFixedSize);
         gridLayout->setSpacing(0);
         gridLayout->setMdiId(mdiChildId);
       }
@@ -34,10 +34,21 @@ MdiChild::MdiChild() {
     stackLayout->addWidget(overlay);
     overlay->raise();
   }
+  stackLayout->setSizeConstraint(QLayout::SetFixedSize);
   setLayout(stackLayout);
 
-  connect(&mFileWatcher, &QFileSystemWatcher::fileChanged, this,
-          [this]() { QTimer::singleShot(2000, this, &MdiChild::updateShoebox); });
+  // Listen the shoebox file changed event
+  connect(&mFileWatcher, &QFileSystemWatcher::fileChanged, this, [this]() {
+    QTimer::singleShot(2000, this, &MdiChild::updateShoebox);
+  });
+  // Update the window size when the number of row involved
+  connect(gridLayout, &TkGridLayout::rowCountChanged, this, [this](int rowCount) {
+    gridWidget->setFixedHeight(rowCount << 5);
+  });
+  // Update the window size when the number of column involved
+  connect(gridLayout, &TkGridLayout::colCountChanged, this, [this](int colCount) {
+    gridWidget->setFixedWidth(colCount << 5);
+  });
 }
 
 MdiChild::~MdiChild() { mFileWatcher.disconnect();
@@ -187,6 +198,7 @@ void MdiChild::buildGrid() {
     gridLayout->addWidget(item, row, col);
   }
   gridLayout->refreshItemCount();
+  parentWidget()->layout()->setSizeConstraint(QLayout::SetMinimumSize);
 }
 
 TkGridItem *MdiChild::getNewGridItem(uint32_t row, uint32_t col, uint32_t mdiId) {
