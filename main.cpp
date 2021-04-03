@@ -26,9 +26,11 @@ int main(int argc, char *argv[])
     app.installTranslator(&myappTranslator);
 
     MainWindow mainWin;
+    mainWin.initialize();
     const QStringList posArgs = parser.positionalArguments();
     for (const QString &fileName : posArgs)
         mainWin.openFile(fileName);
     mainWin.show();
+
     return app.exec();
 }

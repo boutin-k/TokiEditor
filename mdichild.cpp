@@ -7,9 +7,13 @@
 #include "mdichild.h"
 #include "tkgriditem.h"
 #include "tkgridlayout.h"
+#include "tkutils.h"
 
 uint32_t MdiChild::sMdiChildCounter{1U};
 
+/**
+ * @brief Default constructor
+ */
 MdiChild::MdiChild() {
   setAttribute(Qt::WA_DeleteOnClose);
   setWindowIcon(QIcon(":/images/myappico.ico"));
@@ -38,7 +42,7 @@ MdiChild::MdiChild() {
   setLayout(stackLayout);
 
   // Listen the shoebox file changed event
-  connect(&mFileWatcher, &QFileSystemWatcher::fileChanged, this, [this]() {
+  connect(&fileWatcher, &QFileSystemWatcher::fileChanged, this, [this]() {
     QTimer::singleShot(2000, this, &MdiChild::updateShoebox);
   });
   // Update the window size when the number of row involved
@@ -51,13 +55,20 @@ MdiChild::MdiChild() {
   });
 }
 
-MdiChild::~MdiChild() { mFileWatcher.disconnect();
+/**
+ * @brief Destructor
+ */
+MdiChild::~MdiChild() { fileWatcher.disconnect();
 }
 
+/**
+ * @brief Draw the widget
+ * @param[in] event Paint event
+ */
 void MdiChild::paintEvent(QPaintEvent * event) {
   if (shoeboxDisplayed) {
-    int w = _data.gridWidth << 4;
-    int h = _data.gridHeight << 4;
+    int w = data.gridWidth << 4;
+    int h = data.gridHeight << 4;
 
     QPainter painter(this);
     for (const auto &item : shoeboxList) {
@@ -69,6 +80,10 @@ void MdiChild::paintEvent(QPaintEvent * event) {
   QWidget::paintEvent(event);
 }
 
+/**
+ * @brief Draw the Overlay widget
+ * @param event Paint event
+ */
 void MdiChild::Overlay::paintEvent(QPaintEvent * event) {
   QPainter painter(this);
   for (const auto &item : overlay) {
@@ -79,9 +94,13 @@ void MdiChild::Overlay::paintEvent(QPaintEvent * event) {
   QWidget::paintEvent(event);
 }
 
+/**
+ * @brief Update the mdi data
+ * @param[in] d The new data
+ */
 void MdiChild::setData(const levelData &d) {
-  bool update = std::strcmp(d.backFile, _data.backFile);
-  if (_data != d) {
+  bool update = std::strcmp(d.backFile, data.backFile);
+  if (data != d) {
     // clang-format off
     int16_t  x = (d.gridWidth  >> 16) & 0xFFFF;
     int16_t  y = (d.gridHeight >> 16) & 0xFFFF;
@@ -92,38 +111,41 @@ void MdiChild::setData(const levelData &d) {
     using namespace std::placeholders;
     auto func = std::bind(&MdiChild::getNewGridItem, this, _1, _2, _3);
 
-    if (w > _data.gridWidth) {
-      gridLayout->addColumn(w - _data.gridWidth, func);
+    if (w > data.gridWidth) {
+      gridLayout->addColumn(w - data.gridWidth, func);
       if (x != 0) gridLayout->shiftColumn(x, func);
-    } else if (w < _data.gridWidth) {
+    } else if (w < data.gridWidth) {
       if (x != 0) gridLayout->shiftColumn(x, func);
-      gridLayout->removeColumn(_data.gridWidth-w);
+      gridLayout->removeColumn(data.gridWidth-w);
     } else if (x != 0) {
       gridLayout->shiftColumn(x, func);
     }
 
-    if (h > _data.gridHeight) {
-      gridLayout->addRow(h - _data.gridHeight, func);
+    if (h > data.gridHeight) {
+      gridLayout->addRow(h - data.gridHeight, func);
       if (y != 0) gridLayout->shiftRow(y, func);
-    } else if (h < _data.gridHeight) {
+    } else if (h < data.gridHeight) {
       if (y != 0) gridLayout->shiftRow(y, func);
-      gridLayout->removeRow(_data.gridHeight-h);
+      gridLayout->removeRow(data.gridHeight-h);
     } else if (y != 0) {
       gridLayout->shiftRow(y, func);
     }
 
-    _data = d;
-    _data.gridWidth &= 0xFFFF;
-    _data.gridHeight &= 0xFFFF;
+    data = d;
+    data.gridWidth &= 0xFFFF;
+    data.gridHeight &= 0xFFFF;
     setModified(true);
   }
   if (update) updateShoebox();
 }
 
+/**
+ * @brief Update the mdi shoebox
+ */
 void MdiChild::updateShoebox() {
-  if (*_data.backFile != 0) {
-    mFileWatcher.addPath(_data.backFile);
-    QDomElement domElement = getDomDocument(_data.backFile).documentElement();
+  if (*data.backFile != 0) {
+    fileWatcher.addPath(data.backFile);
+    QDomElement domElement = getDomDocument(data.backFile).documentElement();
 
     shoeboxList.clear();
     parseDom(domElement.firstChildElement("background"), shoeboxList);
@@ -133,13 +155,17 @@ void MdiChild::updateShoebox() {
     parseDom(domElement.firstChildElement("foreground"), overlayList);
     overlayList.sort([](const auto &a, const auto &b) { return a.z < b.z; });
 
-    QSize gridSize{(int)(_data.gridWidth << 4), (int)(_data.gridHeight << 4)};
+    QSize gridSize{(int)(data.gridWidth << 4), (int)(data.gridHeight << 4)};
     overlay->updateShoebox(overlayList, gridSize);
 
     repaint();
   }
 }
 
+/**
+ * @brief Update the mdi grid
+ * @param visibility The layers visibility
+ */
 void MdiChild::updateGrid(const QMap<TkLayer, bool> &visibility) {
   for (QObject *widget : gridWidget->children()) {
     TkGridItem *item = qobject_cast<TkGridItem *>(widget);
@@ -147,11 +173,15 @@ void MdiChild::updateGrid(const QMap<TkLayer, bool> &visibility) {
   }
 }
 
+/**
+ * @brief Open file and extract DOM
+ * @param[in] fileName The file containing the DOM
+ * @return The DOM document
+ */
 QDomDocument MdiChild::getDomDocument(const QString &fileName) {
   QDomDocument doc("shoebox");
 
-  static const QString applicationPath = QCoreApplication::applicationDirPath()+'/';
-  QFile file(applicationPath%fileName);
+  QFile file(absolutePath(fileName));
   if (!file.open(QIODevice::ReadOnly)) {
     QMessageBox::warning(
         this, tr("Toki Level Editor"),
@@ -164,6 +194,11 @@ QDomDocument MdiChild::getDomDocument(const QString &fileName) {
   return doc;
 }
 
+/**
+ * @brief Parse the DOM content
+ * @param[in] docElem The dom content
+ * @param[in,out] list The list to populate
+ */
 void MdiChild::parseDom(const QDomElement &docElem, std::list<shoeboxData>& list) {
   if (docElem.tagName() == "plane") {
     QImage image(docElem.attribute("texture"));
@@ -189,11 +224,14 @@ void MdiChild::parseDom(const QDomElement &docElem, std::list<shoeboxData>& list
   }
 }
 
+/**
+ * @brief Build the grid
+ */
 void MdiChild::buildGrid() {
-  ulong nbTiles = _data.getTileNumber();
+  ulong nbTiles = data.getTileNumber();
   for (ulong i = 0U; i < nbTiles; ++i) {
-    uint32_t col = i % _data.gridWidth;
-    uint32_t row = i / _data.gridWidth;
+    uint32_t col = i % data.gridWidth;
+    uint32_t row = i / data.gridWidth;
     TkGridItem *item = getNewGridItem(row, col, mdiChildId);
     gridLayout->addWidget(item, row, col);
   }
@@ -201,6 +239,13 @@ void MdiChild::buildGrid() {
   parentWidget()->layout()->setSizeConstraint(QLayout::SetMinimumSize);
 }
 
+/**
+ * @brief MdiChild::getNewGridItem
+ * @param[in] row The row position of the item
+ * @param[in] col The column position of the item
+ * @param[in] mdiId The Id of the parent widget
+ * @return The grid item pointer
+ */
 TkGridItem *MdiChild::getNewGridItem(uint32_t row, uint32_t col, uint32_t mdiId) {
   TkGridItem *item = new TkGridItem(this);
   item->setProperty("row", row);
@@ -211,26 +256,31 @@ TkGridItem *MdiChild::getNewGridItem(uint32_t row, uint32_t col, uint32_t mdiId)
   return item;
 }
 
+/**
+ * @brief Listener called when mouse button event is trigged
+ * @param[in,out] w The widget related to the event
+ * @param[in,out] ev The mouse event detail
+ */
 void MdiChild::mouseButtonEvent(QWidget *w, QMouseEvent *ev) {
   switch (ev->type()) {
     // Press
     case QEvent::MouseButtonPress: {
       emit itemClicked(static_cast<TkGridItem *>(w), ev->button());
-      if (ev->button() == Qt::LeftButton) _isLeftMouseButtonPressed = true;
-      if (ev->button() == Qt::RightButton) _isRightMouseButtonPressed = true;
+      if (ev->button() == Qt::LeftButton) leftMouseButtonPressed = true;
+      if (ev->button() == Qt::RightButton) rightMouseButtonPressed = true;
       break;
     }
     // Release
     case QEvent::MouseButtonRelease: {
-      if (ev->button() == Qt::LeftButton) _isLeftMouseButtonPressed = false;
-      if (ev->button() == Qt::RightButton) _isRightMouseButtonPressed = false;
+      if (ev->button() == Qt::LeftButton) leftMouseButtonPressed = false;
+      if (ev->button() == Qt::RightButton) rightMouseButtonPressed = false;
       break;
     }
     // Move
     case QEvent::MouseMove: {
       static QPoint lastCoord{-1, -1};
 
-      if (_isLeftMouseButtonPressed || _isRightMouseButtonPressed) {
+      if (leftMouseButtonPressed || rightMouseButtonPressed) {
         QWidget *widget = qApp->widgetAt(QCursor::pos());
         if (widget != nullptr && widget->property("mdiId").toUInt() == mdiChildId) {
           QVariant colVar(widget->property("col"));
@@ -242,8 +292,8 @@ void MdiChild::mouseButtonEvent(QWidget *w, QMouseEvent *ev) {
               lastCoord = {curCol, curRow};
               // clang-format off
               emit itemClicked(static_cast<TkGridItem *>(widget),
-                               (_isLeftMouseButtonPressed)  ? Qt::LeftButton  :
-                               (_isRightMouseButtonPressed) ? Qt::RightButton :
+                               (leftMouseButtonPressed)  ? Qt::LeftButton  :
+                               (rightMouseButtonPressed) ? Qt::RightButton :
                                                               Qt::NoButton);
               // clang-format on
             }
@@ -260,22 +310,30 @@ void MdiChild::mouseButtonEvent(QWidget *w, QMouseEvent *ev) {
   }
 }
 
+/**
+ * @brief Create a new mdi window
+ */
 void MdiChild::newFile()
 {
   buildGrid();
 
   static int sequenceNumber = 1;
 
-  _isUntitled = true;
-  _curFile = tr("level%1.tokilevel").arg(sequenceNumber++);
-  setWindowTitle(_curFile + "[*]");
+  untitled = true;
+  curFile = tr("level%1.tokilevel").arg(sequenceNumber++);
+  setWindowTitle(curFile + "[*]");
 
-  _data.magicNumber = tkMagicNumber;
-  _data.version = tkVersion;
+  data.magicNumber = tkMagicNumber;
+  data.version = tkVersion;
 //    connect(document(), &QTextDocument::contentsChanged,
 //            this, &MdiChild::documentWasModified);
 }
 
+/**
+ * @brief Load a tokilevel file in mdi window
+ * @param[in] fileName The name of the file to load
+ * @return \c true if the file is correctly loaded, otherwise \c false
+ */
 bool MdiChild::loadFile(const QString &fileName)
 {
   bool succeed = false;
@@ -292,33 +350,33 @@ bool MdiChild::loadFile(const QString &fileName)
     QGuiApplication::setOverrideCursor(Qt::WaitCursor);
 
     // Read file header
-    if (file.read((char *)&_data, 8) != 8) {
+    if (file.read((char *)&data, 8) != 8) {
       QMessageBox::warning(this, tr("Toki Level Editor"),
                            tr("Cannot read file %1.").arg(fileName));
       break;
     }
 
     // clang-format off
-    if (_data.magicNumber != tkMagicNumber || _data.version != tkVersion) {
+    if (data.magicNumber != tkMagicNumber || data.version != tkVersion) {
       QMessageBox::warning(this, tr("Toki Level Editor"), tr("File content is incompatible."));
       break;
     }
-    if (file.read((char *)&_data.gridWidth, 524) != 524) {
+    if (file.read((char *)&data.gridWidth, 524) != 524) {
       QMessageBox::warning(this, tr("Toki Level Editor"),
                            tr("Cannot read file %1 content.").arg(fileName));
       break;
     }
 
     // clang-format off
-    if (_data.gridWidth   < tkGridMinWidth  || _data.gridWidth  > tkGridMaxWidth  ||
-        _data.gridHeight  < tkGridMinHeight || _data.gridHeight > tkGridMaxHeight) {
+    if (data.gridWidth   < tkGridMinWidth  || data.gridWidth  > tkGridMaxWidth  ||
+        data.gridHeight  < tkGridMinHeight || data.gridHeight > tkGridMaxHeight) {
       QMessageBox::warning(this, tr("Toki Level Editor"), tr("File content is incompatible."));
       break;
     }
     // clang-format on
 
     buildGrid();
-    ulong nbTiles = _data.getTileNumber();
+    ulong nbTiles = data.getTileNumber();
     uint32_t level[nbTiles];
     if (file.read((char *)&level, nbTiles * sizeof(uint32_t)) != qint64(nbTiles * sizeof(uint32_t))) {
       QMessageBox::warning(this, tr("Toki Level Editor"), tr("File content is corrupted."));
@@ -327,7 +385,7 @@ bool MdiChild::loadFile(const QString &fileName)
 
     for (ulong i = 0ULL; i < nbTiles; ++i) {
       QLayoutItem *item =
-          gridLayout->itemAtPosition(i / _data.gridWidth, i % _data.gridWidth);
+          gridLayout->itemAtPosition(i / data.gridWidth, i % data.gridWidth);
       item->widget()->setProperty("tile", level[i]);
     }
 
@@ -343,25 +401,38 @@ bool MdiChild::loadFile(const QString &fileName)
   return succeed;
 }
 
+/**
+ * @brief Save grid
+ * @return \c true if the grid is correctly saved, otherwise \c false
+ */
 bool MdiChild::save()
 {
-  if (_isUntitled) {
+  if (untitled) {
     return saveAs();
   } else {
-    return saveFile(_curFile);
+    return saveFile(curFile);
   }
 }
 
+/**
+ * @brief Save the grid through a new name
+ * @return \c true if the grid is correctly saved, otherwise \c false
+ */
 bool MdiChild::saveAs()
 {
   QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"),
-                                                  _curFile);
+                                                  curFile);
   if (fileName.isEmpty())
     return false;
 
   return saveFile(fileName);
 }
 
+/**
+ * @brief Save the grid into the file name
+ * @param[in] fileName The name of the file to load
+ * @return \c true if the grid is correctly saved, otherwise \c false
+ */
 bool MdiChild::saveFile(const QString &fileName)
 {
   QString errorMessage;
@@ -372,15 +443,15 @@ bool MdiChild::saveFile(const QString &fileName)
     QSaveFile file(fileName);
     if (file.open(QFile::WriteOnly | QFile::Truncate)) {
       // Write file header
-      if (file.write((const char *)&_data, sizeof(_data)) != sizeof(_data)) {
+      if (file.write((const char *)&data, sizeof(data)) != sizeof(data)) {
         errorMessage = "Cannot write file header";
         break;
       }
       // Write map content
-      std::vector<uint32_t> levelMap(_data.getTileNumber(), 0xFF);
+      std::vector<uint32_t> levelMap(data.getTileNumber(), 0xFF);
       for (ulong i = 0ULL; i < levelMap.size(); ++i) {
-        QLayoutItem *item = gridLayout->itemAtPosition(i / _data.gridWidth,
-                                                       i % _data.gridWidth);
+        QLayoutItem *item = gridLayout->itemAtPosition(i / data.gridWidth,
+                                                       i % data.gridWidth);
         levelMap[i] = item->widget()->property("tile").toUInt();
       }
       if (file.write((const char *)levelMap.data(), levelMap.size() << 2) != qint64(levelMap.size() << 2)) {
@@ -419,11 +490,10 @@ void MdiChild::paste() {}
 
 bool MdiChild::hasSelection() { return false; }
 
-QString MdiChild::userFriendlyCurrentFile()
-{
-  return strippedName(_curFile);
-}
-
+/**
+ * @brief Listener called when user try to close the mdi window
+ * @param[in] event The close event
+ */
 void MdiChild::closeEvent(QCloseEvent *event)
 {
   if (maybeSave()) {
@@ -433,11 +503,18 @@ void MdiChild::closeEvent(QCloseEvent *event)
   }
 }
 
+/**
+ * @brief Update the modified state
+ */
 void MdiChild::documentWasModified()
 {
   setWindowModified(isModified());
 }
 
+/**
+ * @brief Before closing the window ask to save
+ * @return \c true if saved, otherwise \c false
+ */
 bool MdiChild::maybeSave()
 {
   if (!isModified())
@@ -460,15 +537,33 @@ bool MdiChild::maybeSave()
   return true;
 }
 
+/**
+ * @brief Update the mdi window title
+ * @param[in] fileName The path of the opened file
+ */
 void MdiChild::setCurrentFile(const QString &fileName)
 {
-  _curFile = QFileInfo(fileName).canonicalFilePath();
-  _isUntitled = false;
+  curFile = QFileInfo(fileName).canonicalFilePath();
+  untitled = false;
   setModified(false);
   setWindowModified(false);
   setWindowTitle(userFriendlyCurrentFile() + "[*]");
 }
 
+/**
+ * @brief Display the name of the file without the path
+ * @return The name of the file
+ */
+QString MdiChild::userFriendlyCurrentFile()
+{
+  return strippedName(curFile);
+}
+
+/**
+ * @brief stripped the name of the file
+ * @param[in] fullFileName The file path
+ * @return The name of the file
+ */
 QString MdiChild::strippedName(const QString &fullFileName)
 {
   return QFileInfo(fullFileName).fileName();

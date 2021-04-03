@@ -2,7 +2,6 @@
 #define TKGRIDITEM_H
 
 #include <QObject>
-#include <QVariant>
 #include <QMap>
 
 #include "tklabel.h"

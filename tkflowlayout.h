@@ -1,16 +1,16 @@
-#ifndef FLOWLAYOUT_H
-#define FLOWLAYOUT_H
+#ifndef TKFLOWLAYOUT_H
+#define TKFLOWLAYOUT_H
 
 #include <QLayout>
 #include <QRect>
 #include <QStyle>
 
-class FlowLayout : public QLayout
+class TkFlowLayout : public QLayout
 {
  public:
-  explicit FlowLayout(QWidget *parent, int margin = -1, int hSpacing = -1, int vSpacing = -1);
-  explicit FlowLayout(int margin = -1, int hSpacing = -1, int vSpacing = -1);
-  ~FlowLayout();
+  explicit TkFlowLayout(QWidget *parent, int margin = -1, int hSpacing = -1, int vSpacing = -1);
+  explicit TkFlowLayout(int margin = -1, int hSpacing = -1, int vSpacing = -1);
+  ~TkFlowLayout();
 
   void addItem(QLayoutItem *item) override;
   int horizontalSpacing() const;
@@ -30,8 +30,8 @@ class FlowLayout : public QLayout
   int smartSpacing(QStyle::PixelMetric pm) const;
 
   QList<QLayoutItem *> itemList;
-  int m_hSpace;
-  int m_vSpace;
+  int hSpace{0};
+  int vSpace{0};
 };
 
-#endif // FLOWLAYOUT_H
+#endif // TKFLOWLAYOUT_H

@@ -6,12 +6,23 @@
 
 constexpr uint32_t TkGridItem::layerMask[];
 
-TkGridItem::TkGridItem(QWidget* parent, Qt::WindowFlags f)
-    : TkGridItem("", parent, f) {}
+/**
+ * @brief TkGridItem constructor
+ * @param[in,out] parent The parent widget
+ * @param[in] flags The window flags
+ */
+TkGridItem::TkGridItem(QWidget* parent, Qt::WindowFlags flags)
+    : TkGridItem("", parent, flags) {}
 
+/**
+ * @brief TkGridItem constructor
+ * @param[in] text The text to display in the label
+ * @param[in,out] parent The parent widget
+ * @param[in] flags The window flags
+ */
 TkGridItem::TkGridItem(const QString& text, QWidget* parent,
-                         Qt::WindowFlags f)
-    : TkLabel(text, parent, f) {
+                         Qt::WindowFlags flags)
+    : TkLabel(text, parent, flags) {
   installEventFilter(this);
   setProperty("tile", 0xFF);
   setAttribute(Qt::WA_Hover);
@@ -27,8 +38,16 @@ TkGridItem::TkGridItem(const QString& text, QWidget* parent,
   });
 }
 
+/**
+ * @brief Destructor
+ */
 TkGridItem::~TkGridItem() {}
 
+/**
+ * @brief Clear the pixmap layer on the gridItem
+ * @param[in] index The index of the layer to clear
+ * @return \c true if the layer has been clear, \c false otherwise
+ */
 bool TkGridItem::clearPixmapLayer(uint32_t index) {
   bool updated = false;
 
@@ -46,6 +65,14 @@ bool TkGridItem::clearPixmapLayer(uint32_t index) {
   return updated;
 }
 
+/**
+ * @brief TkGridItem::updatePixmapLayer
+ * @param pixmap The pixmap to use on the layer related to \a index
+ * @param index The layer to update
+ * @param tile The mask related to the pixmap
+ * @param forceUpdate Force the update of the layer pixmap
+ * @return \c true if the pixmap layer is updated , otherwise \c false
+ */
 bool TkGridItem::updatePixmapLayer(const QPixmap& pixmap, uint32_t index,
                                    uint32_t tile, bool forceUpdate) {
   bool updated = false;
@@ -65,6 +92,9 @@ bool TkGridItem::updatePixmapLayer(const QPixmap& pixmap, uint32_t index,
   return updated;
 }
 
+/**
+ * @brief Draw the widget pixmap with the layers
+ */
 void TkGridItem::drawPixmap() {
   static const QPixmap defaultPixmap(":/images/grid.png");
   QPixmap tempPixmap = defaultPixmap;

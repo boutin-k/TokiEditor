@@ -4,9 +4,9 @@
 #include <QMainWindow>
 
 class MdiChild;
-class FlowLayout;
 class TkLabel;
 class TkGridItem;
+class TkFlowLayout;
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -26,6 +26,7 @@ class MainWindow : public QMainWindow
 public:
     MainWindow();
 
+    void initialize();
     bool openFile(const QString &fileName);
 
 protected:
@@ -72,38 +73,38 @@ private:
     MdiChild *activeMdiChild() const;
     QMdiSubWindow *findMdiChild(const QString &fileName) const;
 
-    QMdiArea *mdiArea;
+    QMdiArea *mdiArea{nullptr};
 
-    QMenu *windowMenu;
-    QAction *newAct;
-    QAction *saveAct;
-    QAction *saveAsAct;
+    QMenu *windowMenu{nullptr};
+    QAction *newAct{nullptr};
+    QAction *saveAct{nullptr};
+    QAction *saveAsAct{nullptr};
     QAction *recentFileActs[MaxRecentFiles];
-    QAction *recentFileSeparator;
-    QAction *recentFileSubMenuAct;
+    QAction *recentFileSeparator{nullptr};
+    QAction *recentFileSubMenuAct{nullptr};
 
-    QAction *groundAct;
-    QAction *backgroundAct;
-    QAction *foregroundAct;
-    QAction *shoeboxAct;
+    QAction *groundAct{nullptr};
+    QAction *backgroundAct{nullptr};
+    QAction *foregroundAct{nullptr};
+    QAction *shoeboxAct{nullptr};
 #ifndef QT_NO_CLIPBOARD
-    QAction *cutAct;
-    QAction *copyAct;
-    QAction *pasteAct;
+    QAction *cutAct{nullptr};
+    QAction *copyAct{nullptr};
+    QAction *pasteAct{nullptr};
 #endif
-    QAction *settingsAct;
-    QAction *closeAct;
-    QAction *closeAllAct;
-    QAction *tileAct;
-    QAction *cascadeAct;
-    QAction *nextAct;
-    QAction *previousAct;
-    QAction *windowMenuSeparatorAct;
+    QAction *settingsAct{nullptr};
+    QAction *closeAct{nullptr};
+    QAction *closeAllAct{nullptr};
+    QAction *tileAct{nullptr};
+    QAction *cascadeAct{nullptr};
+    QAction *nextAct{nullptr};
+    QAction *previousAct{nullptr};
+    QAction *windowMenuSeparatorAct{nullptr};
 
-    QToolBox *dockToolbox;
-    FlowLayout *dockLayout{nullptr};
-    QWidget *_selectedDockTile{nullptr};
-    QPixmap _selectedDockPixmap;
+    QToolBox *dockToolbox{nullptr};
+    TkFlowLayout *dockLayout{nullptr};
+    QWidget *selectedDockTile{nullptr};
+    QPixmap selectedDockPixmap;
 
     QVector<TkLabel *> dockItems;
 };

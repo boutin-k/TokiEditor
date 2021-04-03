@@ -1,10 +1,11 @@
 ﻿#include <QtWidgets>
 #include <QMap>
 
-#include "flowlayout.h"
+#include "tkflowlayout.h"
 #include "mainwindow.h"
 #include "mdichild.h"
 #include "tklabel.h"
+#include "tkutils.h"
 
 #include "settingsdialog.h"
 
@@ -20,6 +21,9 @@
     "border-width:2px;"            \
     "border-style:dashed"
 
+/**
+ * @brief Default constructor
+ */
 MainWindow::MainWindow()
     : mdiArea(new QMdiArea)
 {
@@ -31,17 +35,31 @@ MainWindow::MainWindow()
   connect(mdiArea, &QMdiArea::subWindowActivated,
           this, &MainWindow::updateMenus);
 
-  createActions();
-  createDockWindows();
-  createStatusBar();
-  updateMenus();
-
-  readSettings();
-
   setWindowTitle(tr("Toki Level Editor"));
   setUnifiedTitleAndToolBarOnMac(true);
 }
 
+/**
+ * @brief Initialize the main window child widgets
+ */
+void MainWindow::initialize() {
+  try {
+    createActions();
+    createDockWindows();
+    createStatusBar();
+    updateMenus();
+
+    readSettings();
+  } catch (const char *msg) {
+    QMessageBox::warning(this, tr("Toki Level Editor"), msg);
+    throw;
+  }
+}
+
+/**
+ * @brief Close all the mdi windows
+ * @param[in,out] event Close event
+ */
 void MainWindow::closeEvent(QCloseEvent *event)
 {
 
@@ -54,6 +72,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
   }
 }
 
+/**
+ * @brief Create a new tokilevel file
+ */
 void MainWindow::newFile()
 {
   SettingsDialog *settingsDialog = new SettingsDialog(this);
@@ -75,6 +96,9 @@ void MainWindow::newFile()
   settingsDialog->show();
 }
 
+/**
+ * @brief Launch the open file dialog
+ */
 void MainWindow::open()
 {
   const QString fileName = QFileDialog::getOpenFileName(this, tr("Open Level"), "~", "*.tokilevel");
@@ -82,6 +106,11 @@ void MainWindow::open()
     openFile(fileName);
 }
 
+/**
+ * @brief Open an existing tokilevel file
+ * @param[in] fileName The path of the tokilevel file
+ * @return \c true if file is correctly loaded, otherwise \c false
+ */
 bool MainWindow::openFile(const QString &fileName)
 {
   if (QMdiSubWindow *existing = findMdiChild(fileName)) {
@@ -94,6 +123,11 @@ bool MainWindow::openFile(const QString &fileName)
   return succeeded;
 }
 
+/**
+ * @brief Load the tokilevel data into a mdi child
+ * @param fileName The path of the tokilevel file
+ * @return \c true if file is correctly loaded, otherwise \c false
+ */
 bool MainWindow::loadFile(const QString &fileName)
 {
   dockItemUnselect();
@@ -145,6 +179,11 @@ bool MainWindow::loadFile(const QString &fileName)
 static inline QString recentFilesKey() { return QStringLiteral("recentFileList"); }
 static inline QString fileKey() { return QStringLiteral("file"); }
 
+/**
+ * @brief Get from the QSettings the list of recent opened files
+ * @param[in,out] settings The internal data storage
+ * @return The list of recent opened files
+ */
 static QStringList readRecentFiles(QSettings &settings)
 {
   QStringList result;
@@ -157,6 +196,11 @@ static QStringList readRecentFiles(QSettings &settings)
   return result;
 }
 
+/**
+ * @brief Set the list of recent opened files
+ * @param[in] files The list of recent opened filed
+ * @param[in,out] settings The internal data storage
+ */
 static void writeRecentFiles(const QStringList &files, QSettings &settings)
 {
   const int count = files.size();
@@ -168,6 +212,10 @@ static void writeRecentFiles(const QStringList &files, QSettings &settings)
   settings.endArray();
 }
 
+/**
+ * @brief Check if recent opened file exists in internal data storage
+ * @return \c true if it exists, otherwise \c false
+ */
 bool MainWindow::hasRecentFiles()
 {
   QSettings settings(QCoreApplication::organizationName(), QCoreApplication::applicationName());
@@ -176,6 +224,10 @@ bool MainWindow::hasRecentFiles()
   return count > 0;
 }
 
+/**
+ * @brief Prepend the file name into the list of opened file
+ * @param[in] fileName The file to prepend
+ */
 void MainWindow::prependToRecentFiles(const QString &fileName)
 {
   QSettings settings(QCoreApplication::organizationName(), QCoreApplication::applicationName());
@@ -190,12 +242,19 @@ void MainWindow::prependToRecentFiles(const QString &fileName)
   setRecentFilesVisible(!recentFiles.isEmpty());
 }
 
+/**
+ * @brief Enable/Disable the visibility of recent file menu
+ * @param[in] visible The visibility state
+ */
 void MainWindow::setRecentFilesVisible(bool visible)
 {
   recentFileSubMenuAct->setVisible(visible);
   recentFileSeparator->setVisible(visible);
 }
 
+/**
+ * @brief Update recent file actions visbility
+ */
 void MainWindow::updateRecentFileActions()
 {
   QSettings settings(QCoreApplication::organizationName(), QCoreApplication::applicationName());
@@ -213,18 +272,27 @@ void MainWindow::updateRecentFileActions()
     recentFileActs[i]->setVisible(false);
 }
 
+/**
+ * @brief Open a file from the recent file list
+ */
 void MainWindow::openRecentFile()
 {
   if (const QAction *action = qobject_cast<const QAction *>(sender()))
     openFile(action->data().toString());
 }
 
+/**
+ * @brief Save the current tokilevel file
+ */
 void MainWindow::save()
 {
   if (activeMdiChild() && activeMdiChild()->save())
     statusBar()->showMessage(tr("File saved"), 2000);
 }
 
+/**
+ * @brief Save the current tokilevel file to an other name
+ */
 void MainWindow::saveAs()
 {
   MdiChild *child = activeMdiChild();
@@ -254,6 +322,9 @@ void MainWindow::paste()
 }
 #endif
 
+/**
+ * @brief Display about message box
+ */
 void MainWindow::about()
 {
   QMessageBox::about(this, tr("About Toki Level Editor"),
@@ -261,6 +332,9 @@ void MainWindow::about()
                      "for <b>Toki</b> platform game."));
 }
 
+/**
+ * @brief Update the menu states
+ */
 void MainWindow::updateMenus()
 {
   bool hasMdiChild = (activeMdiChild() != nullptr);
@@ -290,6 +364,9 @@ void MainWindow::updateMenus()
 #endif
 }
 
+/**
+ * @brief Update window menu
+ */
 void MainWindow::updateWindowMenu()
 {
   windowMenu->clear();
@@ -329,6 +406,11 @@ void MainWindow::updateWindowMenu()
   }
 }
 
+/**
+ * @brief Listener called when a child of mdi window is clicked
+ * @param[in,out] item The clicked widget
+ * @param[in] button The button related to the click event
+ */
 void MainWindow::mdiChildItemClicked(TkGridItem *item, Qt::MouseButton button) {
   if (activeMdiChild() == nullptr) return;
 
@@ -340,8 +422,8 @@ void MainWindow::mdiChildItemClicked(TkGridItem *item, Qt::MouseButton button) {
 
   switch (button) {
     case Qt::LeftButton: {
-      if (_selectedDockTile != nullptr) {
-        uint32_t tile = _selectedDockTile->property("id").toUInt();
+      if (selectedDockTile != nullptr) {
+        uint32_t tile = selectedDockTile->property("id").toUInt();
 
         if (tile == 0xFD) {
           TkGridItem *toki = activeMdiChild()->getTokiTile();
@@ -354,7 +436,7 @@ void MainWindow::mdiChildItemClicked(TkGridItem *item, Qt::MouseButton button) {
           activeMdiChild()->setTokiTile(item);
         }
 
-        if (item->updatePixmapLayer(_selectedDockPixmap, index, tile))
+        if (item->updatePixmapLayer(selectedDockPixmap, index, tile))
           activeMdiChild()->setModified(true);
       }
       break;
@@ -372,6 +454,10 @@ void MainWindow::mdiChildItemClicked(TkGridItem *item, Qt::MouseButton button) {
   }
 }
 
+/**
+ * @brief Create a new mdi child
+ * @return The instance of mdi child
+ */
 MdiChild *MainWindow::createMdiChild()
 {
   MdiChild *child = new MdiChild;
@@ -386,6 +472,9 @@ MdiChild *MainWindow::createMdiChild()
   return child;
 }
 
+/**
+ * @brief Build the left dock
+ */
 void MainWindow::createDockWindows()
 {
   QDockWidget *dock = new QDockWidget(tr("Forest Tiles"), this);
@@ -407,24 +496,26 @@ void MainWindow::createDockWindows()
   addDockWidget(Qt::LeftDockWidgetArea, dock);
 
   dockToolbox = new QToolBox(scrollArea);
-  FlowLayout* groundLayout = new FlowLayout(new QWidget(dockToolbox));
+  TkFlowLayout* groundLayout = new TkFlowLayout(new QWidget(dockToolbox));
   dockToolbox->addItem(groundLayout->parentWidget(), tr("ground"));
 
-  FlowLayout* backgroundLayout = new FlowLayout(new QWidget(dockToolbox));
+  TkFlowLayout* backgroundLayout = new TkFlowLayout(new QWidget(dockToolbox));
   dockToolbox->addItem(backgroundLayout->parentWidget(), tr("background"));
 
-  FlowLayout* foregroundtLayout = new FlowLayout(new QWidget(dockToolbox));
+  TkFlowLayout* foregroundtLayout = new TkFlowLayout(new QWidget(dockToolbox));
   dockToolbox->addItem(foregroundtLayout->parentWidget(), tr("foreground"));
 
-  FlowLayout *entityLayout = new FlowLayout(new QWidget(dockToolbox));
+  TkFlowLayout *entityLayout = new TkFlowLayout(new QWidget(dockToolbox));
   dockToolbox->addItem(entityLayout->parentWidget(), tr("entity"));
 
   connect(dockToolbox, &QToolBox::currentChanged, this, &MainWindow::dockItemUnselect);
 
   scrollArea->setWidget(dockToolbox);
 
-  QString applicationPath = QCoreApplication::applicationDirPath();
-  QPixmap *pixmap = new QPixmap(applicationPath+"/textures/tiles/forest_tiles.png");
+  QPixmap *pixmap = new QPixmap(absolutePath("textures/tiles/forest_tiles.png"));
+  if (pixmap == nullptr || pixmap->isNull())
+    throw "Could not find the file : 'textures/tiles/forest_tiles.png'";
+
   int spritePerLine = pixmap->width() >> 5;
   //  int nbTile = spritePerLine * (pixmap->height() >> 5);
   int nbTile = 108;
@@ -471,37 +562,47 @@ void MainWindow::createDockWindows()
   entityLayout->addWidget(eggLabel);
 }
 
+/**
+ * @brief Listener called when a child of dock widget is unselected
+ */
 void MainWindow::dockItemUnselect() {
-  if (nullptr != _selectedDockTile) {
-    _selectedDockTile->setStyleSheet(DockItemDefaultStylesheet);
-    ((QLabel *)_selectedDockTile)->setPixmap(_selectedDockPixmap);
-    _selectedDockTile = nullptr;
+  if (nullptr != selectedDockTile) {
+    selectedDockTile->setStyleSheet(DockItemDefaultStylesheet);
+    ((QLabel *)selectedDockTile)->setPixmap(selectedDockPixmap);
+    selectedDockTile = nullptr;
   }
 }
 
+/**
+ * @brief Listener called when a child of dock widget is selected
+ * @param[in,out] tile The widget related to the click
+ * @param[in,out] event The mouse event
+ */
 void MainWindow::dockItemClicked(TkLabel *tile, QMouseEvent *event) {
-  if (tile == _selectedDockTile) return;
+  if (tile == selectedDockTile) return;
 
   if (event->type() == QEvent::MouseButtonPress) {
     // Restore previous button
     dockItemUnselect();
 
-    _selectedDockTile = tile;
+    selectedDockTile = tile;
     tile->setStyleSheet(DockItemSelectedStylesheet);
 
-    _selectedDockPixmap = tile->pixmap(Qt::ReturnByValue);
-    QPixmap tempPixmap = _selectedDockPixmap;
+    selectedDockPixmap = tile->pixmap(Qt::ReturnByValue);
+    QPixmap tempPixmap = selectedDockPixmap;
 
     QPainter painter;
     painter.begin(&tempPixmap);
-    painter.fillRect(_selectedDockPixmap.rect(), QColor(127, 127, 127, 127));
+    painter.fillRect(selectedDockPixmap.rect(), QColor(127, 127, 127, 127));
     painter.end();
 
     tile->setPixmap(tempPixmap);
   }
 }
 
-
+/**
+ * @brief Build the menu and toolbar
+ */
 void MainWindow::createActions()
 {
   // FILE MENU
@@ -708,11 +809,17 @@ void MainWindow::createActions()
   }
 }
 
+/**
+ * @brief Build the statusbar
+ */
 void MainWindow::createStatusBar()
 {
     statusBar()->showMessage(tr("Ready"));
 }
 
+/**
+ * @brief Restore the last position of the application on the screen
+ */
 void MainWindow::readSettings()
 {
   QSettings settings(QCoreApplication::organizationName(), QCoreApplication::applicationName());
@@ -727,12 +834,18 @@ void MainWindow::readSettings()
   }
 }
 
+/**
+ * @brief Save the position of the application on the screen
+ */
 void MainWindow::writeSettings()
 {
   QSettings settings(QCoreApplication::organizationName(), QCoreApplication::applicationName());
   settings.setValue("geometry", saveGeometry());
 }
 
+/**
+ * @brief Open the mdi settings dialog
+ */
 void MainWindow::activeMdiChildSettingsDialog() {
   MdiChild *child = activeMdiChild();
 
@@ -752,6 +865,10 @@ void MainWindow::activeMdiChildSettingsDialog() {
   settingsDialog->show();
 }
 
+/**
+ * @brief Get the focused mdi child
+ * @return The pointer of the active mdi child or nullptr if none
+ */
 MdiChild *MainWindow::activeMdiChild() const
 {
   if (QMdiSubWindow *activeSubWindow = mdiArea->activeSubWindow())
@@ -759,6 +876,11 @@ MdiChild *MainWindow::activeMdiChild() const
   return nullptr;
 }
 
+/**
+ * @brief Find a mdi file from its file name
+ * @param[in] fileName The file name related to the mdi child
+ * @return The pointer of the active mdi child or nullptr if not found
+ */
 QMdiSubWindow *MainWindow::findMdiChild(const QString &fileName) const
 {
   QString canonicalFilePath = QFileInfo(fileName).canonicalFilePath();
@@ -772,6 +894,9 @@ QMdiSubWindow *MainWindow::findMdiChild(const QString &fileName) const
   return nullptr;
 }
 
+/**
+ * @brief Update the content of mdi children
+ */
 void MainWindow::updateMdiChildren() {
   // clang-format off
   QMap<TkLayer, bool> map = {
@@ -789,6 +914,9 @@ void MainWindow::updateMdiChildren() {
   }
 }
 
+/**
+ * @brief Update the shoebox of mdi children
+ */
 void MainWindow::updateMdiShoebox() {
   const QList<QMdiSubWindow *> subWindows = mdiArea->subWindowList();
   for (QMdiSubWindow *window : subWindows) {

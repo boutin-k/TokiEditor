@@ -2,6 +2,7 @@
 #include "tkgriditem.h"
 
 #include <QWidget>
+#include <QVariant>
 
 /**
  * @brief Default constructor
@@ -10,13 +11,13 @@ TkGridLayout::TkGridLayout() {}
 
 /**
  * @brief Constructor with QWidget parent
- * @param parent QWidget Parent
+ * @param[in,out] parent QWidget Parent
  */
 TkGridLayout::TkGridLayout(QWidget *parent) : QGridLayout(parent) {}
 
 /**
- * @brief GridLayout::shiftRow
- * @param shiftCount
+ * @brief Shift the rows in the grid
+ * @param[in] shiftCount The shift bound
  */
 void TkGridLayout::shiftRow(int shiftCount, callback func) {
   if (shiftCount == 0) return;
@@ -67,8 +68,8 @@ void TkGridLayout::shiftRow(int shiftCount, callback func) {
 }
 
 /**
- * @brief GridLayout::shiftColumn
- * @param shiftCount
+ * @brief Shift the column in the grid
+ * @param[in] shiftCount The shift bound
  */
 void TkGridLayout::shiftColumn(int shiftCount, callback func) {
   if (shiftCount == 0) return;
@@ -119,8 +120,8 @@ void TkGridLayout::shiftColumn(int shiftCount, callback func) {
 }
 
 /**
- * @brief GridLayout::addRow
- * @param rowCount
+ * @brief Add rows in the grid
+ * @param[in] rowCount The quantity of row to add
  */
 void TkGridLayout::addRow(uint32_t rowCount, callback func) {
   if (rowCount == 0 || !func) return;
@@ -135,8 +136,8 @@ void TkGridLayout::addRow(uint32_t rowCount, callback func) {
 }
 
 /**
- * @brief GridLayout::addColumn
- * @param columnCount
+ * @brief Add columns in the grid
+ * @param[in] columnCount The quantity of columns to add
  */
 void TkGridLayout::addColumn(uint32_t columnCount, callback func) {
   if (columnCount == 0 || !func) return;
@@ -150,9 +151,9 @@ void TkGridLayout::addColumn(uint32_t columnCount, callback func) {
 }
 
 /**
- * @brief GridLayout::removeRow
- * @param row
- * @param deleteWidgets
+ * @brief Remove rows in the grid
+ * @param[in] row The quantity of row to remove
+ * @param[in] deleteWidgets \c true to delete the cells children, otherwise \c false
  */
 void TkGridLayout::removeRow(int row, bool deleteWidgets) {
   if (row == 0) return;
@@ -167,9 +168,9 @@ void TkGridLayout::removeRow(int row, bool deleteWidgets) {
 }
 
 /**
- * @brief GridLayout::removeColumn
- * @param column
- * @param deleteWidgets
+ * @brief Remove columns in the grid
+ * @param[in] column The quantity of column to remove
+ * @param[in] deleteWidgets \c true to delete the cells children, otherwise \c false
  */
 void TkGridLayout::removeColumn(int column, bool deleteWidgets) {
   if (column == 0) return;
@@ -185,9 +186,9 @@ void TkGridLayout::removeColumn(int column, bool deleteWidgets) {
 
 /**
  * @brief GridLayout::remove
- * @param row
- * @param column
- * @param deleteWidgets
+ * @param[in] row The row position to remove
+ * @param[in] column The column position to remove
+ * @param[in] deleteWidgets \c true to delete the cells children, otherwise \c false
  */
 void TkGridLayout::remove(int row, int column, bool deleteWidgets) {
   // We avoid usage of QGridLayout::itemAtPosition() here to improve performance.
@@ -207,8 +208,8 @@ void TkGridLayout::remove(int row, int column, bool deleteWidgets) {
 }
 
 /**
- * @brief GridLayout::deleteChildWidgets
- * @param item
+ * @brief Delete the child widgets of the item
+ * @param[in] item The object on which the child must be deleted
  */
 void TkGridLayout::deleteChildWidgets(QLayoutItem *item) {
   if (item == nullptr) return;

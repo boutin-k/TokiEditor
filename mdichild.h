@@ -43,7 +43,7 @@ class MdiChild : public QWidget
   void paste();
   bool hasSelection();
   QString userFriendlyCurrentFile();
-  inline QString currentFile() { return _curFile; }
+  inline QString currentFile() { return curFile; }
 
   void updateGrid(const QMap<TkLayer, bool>& visibility);
   inline void updateShoeboxState(bool enabled) {
@@ -51,16 +51,16 @@ class MdiChild : public QWidget
   }
 
   void setData(const levelData &d);
-  inline const levelData& getData() const { return _data; }
+  inline const levelData& getData() const { return data; }
 
-  inline void setModified(bool m) { _isModified = m; documentWasModified(); }
-  inline bool isModified() const { return _isModified; }
+  inline void setModified(bool m) { modified = m; documentWasModified(); }
+  inline bool isModified() const { return modified; }
 
-  inline const QString tilePath() { return _data.tileFile; }
-  inline const QString eggsPath() { return _data.eggsFile; }
-  inline const QString backPath() { return _data.backFile; }
-  inline const QString musicPath() { return _data.musicFile; }
-  inline const QSize levelSize() { return QSize(_data.gridWidth, _data.gridHeight); }
+  inline const QString tilePath() { return data.tileFile; }
+  inline const QString eggsPath() { return data.eggsFile; }
+  inline const QString backPath() { return data.backFile; }
+  inline const QString musicPath() { return data.musicFile; }
+  inline const QSize levelSize() { return QSize(data.gridWidth, data.gridHeight); }
 
   inline TkGridItem *getTokiTile() const { return tokiTile; }
   inline void setTokiTile(TkGridItem *tile) { tokiTile = tile; }
@@ -116,25 +116,25 @@ class MdiChild : public QWidget
 
   uint32_t mdiChildId{sMdiChildCounter++};
 
-  QString _curFile;
+  QString curFile;
 
   TkGridLayout* gridLayout{nullptr};
   QWidget* gridWidget{nullptr};
 
   TkGridItem *tokiTile{nullptr};
 
-  bool _isUntitled{true};
-  bool _isModified{false};
-  bool _isLeftMouseButtonPressed{false};
-  bool _isRightMouseButtonPressed{false};
+  bool untitled{true};
+  bool modified{false};
+  bool leftMouseButtonPressed{false};
+  bool rightMouseButtonPressed{false};
 
-  levelData _data;
+  levelData data;
 
   Overlay* overlay{nullptr};
   bool shoeboxDisplayed{true};
   std::list<shoeboxData> shoeboxList;
   std::list<shoeboxData> overlayList;
-  QFileSystemWatcher mFileWatcher;
+  QFileSystemWatcher fileWatcher;
 };
 
 #endif

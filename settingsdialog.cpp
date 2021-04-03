@@ -10,6 +10,10 @@
 #include <QFileDialog>
 #include <QCheckBox>
 
+/**
+ * @brief Constructor
+ * @param[in] parent Parent widget
+ */
 SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent), buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel) {
   connect(&buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
   connect(&buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
@@ -34,8 +38,8 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent), buttonBox(QDi
 }
 
 /**
- * @brief SettingsDialog::buildPathTab
- * @return
+ * @brief Build the path tab
+ * @return The pathTab widget
  */
 QWidget *SettingsDialog::buildPathTab() {
   QVBoxLayout *pathLayout = new QVBoxLayout(new QWidget);
@@ -100,8 +104,8 @@ QWidget *SettingsDialog::buildPathTab() {
 }
 
 /**
- * @brief SettingsDialog::buildSizeTab
- * @return
+ * @brief Build the sizeTab
+ * @return The sizeTab widget
  */
 QWidget *SettingsDialog::buildSizeTab() {
   QVBoxLayout *sizeLayout = new QVBoxLayout(new QWidget);
@@ -170,8 +174,8 @@ QWidget *SettingsDialog::buildSizeTab() {
 }
 
 /**
- * @brief SettingsDialog::buildActionTab
- * @return
+ * @brief Build the actionTab
+ * @return The actionTab widget
  */
 QWidget *SettingsDialog::buildActionTab() {
   QVBoxLayout *actionsLayout = new QVBoxLayout(new QWidget);
@@ -211,7 +215,7 @@ QWidget *SettingsDialog::buildActionTab() {
 }
 
 /**
- * @brief SettingsDialog::tileButtonClicked
+ * @brief Listener called when the tile button is clicked
  */
 void SettingsDialog::tileButtonClicked(bool) {
   QFileInfo fileInfo(tileEdit.text());
@@ -224,7 +228,7 @@ void SettingsDialog::tileButtonClicked(bool) {
 }
 
 /**
- * @brief SettingsDialog::eggsButtonClicked
+ * @brief Listener called when the eggs button is clicked
  */
 void SettingsDialog::eggsButtonClicked(bool) {
   QFileInfo fileInfo(eggsEdit.text());
@@ -237,7 +241,7 @@ void SettingsDialog::eggsButtonClicked(bool) {
 }
 
 /**
- * @brief SettingsDialog::backButtonClicked
+ * @brief Listener called when the back button is clicked
  */
 void SettingsDialog::backButtonClicked(bool) {
   QFileInfo fileInfo(backEdit.text());
@@ -250,7 +254,7 @@ void SettingsDialog::backButtonClicked(bool) {
 }
 
 /**
- * @brief SettingsDialog::musicButtonClicked
+ * @brief Listener called when the music button is clicked
  */
 void SettingsDialog::musicButtonClicked(bool) {
   QFileInfo fileInfo(musicEdit.text());
@@ -263,23 +267,23 @@ void SettingsDialog::musicButtonClicked(bool) {
 }
 
 /**
- * @brief SettingsDialog::widthValueChange
+ * @brief Listener called when the width value change
  */
 void SettingsDialog::widthValueChange(int value) {
   levelXSpinBox.setRange(-value, value);
 }
 
 /**
- * @brief SettingsDialog::heightValueChange
+ * @brief Listener called when the height value change
  */
 void SettingsDialog::heightValueChange(int value) {
   levelYSpinBox.setRange(-value, value);
 }
 
 /**
- * @brief SettingsDialog::relativePath
- * @param path
- * @return
+ * @brief Transform an absolute path to a relative path
+ * @param[in] path Path to transform
+ * @return The relative path
  */
 QString SettingsDialog::relativePath(const QString &path) {
   QDir dir(QCoreApplication::applicationDirPath());
