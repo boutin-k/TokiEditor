@@ -18,7 +18,9 @@ QT_END_NAMESPACE
 
 #define QT_NO_CLIPBOARD
 
-
+/**
+ * @brief The MainWindow class is the Qt parent window of the application. It's the UI start point.
+ */
 class MainWindow : public QMainWindow
 {
     Q_OBJECT

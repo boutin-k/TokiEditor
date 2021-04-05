@@ -13,6 +13,10 @@
 
 class TkGridLayout;
 
+/**
+ * @brief The shoeboxData struct is used to define an element of the shoebox.
+ * A shoebox is made up of images with 3D coordinates.
+ */
 struct shoeboxData {
   int x{0};
   int y{0};
@@ -24,6 +28,9 @@ struct shoeboxData {
       : x(x), y(y), z(z), i(std::move(i)) {}
 };
 
+/**
+ * @brief The MdiChild class is the main widget of a new mdi window.
+ */
 class MdiChild : public QWidget
 {
   Q_OBJECT
@@ -91,7 +98,9 @@ class MdiChild : public QWidget
 
 
   /**
-   * @brief The Overlay class
+   * @brief The Overlay class/widget is used to display the foreground shoebox part.
+   * This widget is transparent and mouse events go through.
+   * Only shoebox images paint on it through \c paintEvent are displayed.
    */
   class Overlay : public QWidget {
    public:

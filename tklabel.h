@@ -13,8 +13,8 @@ class TkLabel : public QLabel
   Q_OBJECT
 
  public:
-  explicit TkLabel(QWidget *parent=nullptr, Qt::WindowFlags f=Qt::WindowFlags());
-  explicit TkLabel(const QString &text, QWidget *parent=nullptr, Qt::WindowFlags f=Qt::WindowFlags());
+  explicit TkLabel(QWidget *parent=nullptr, Qt::WindowFlags flags=Qt::WindowFlags());
+  explicit TkLabel(const QString &text, QWidget *parent=nullptr, Qt::WindowFlags flags=Qt::WindowFlags());
   ~TkLabel();
 
   Q_SIGNAL void mouseButtonEvent(TkLabel *, QMouseEvent *);

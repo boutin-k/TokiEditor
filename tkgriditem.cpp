@@ -69,7 +69,7 @@ bool TkGridItem::clearPixmapLayer(uint32_t index) {
  * @brief TkGridItem::updatePixmapLayer
  * @param pixmap The pixmap to use on the layer related to \a index
  * @param index The layer to update
- * @param tile The mask related to the pixmap
+ * @param tile The id of the pixmap
  * @param forceUpdate Force the update of the layer pixmap
  * @return \c true if the pixmap layer is updated , otherwise \c false
  */

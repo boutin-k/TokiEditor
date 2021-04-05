@@ -10,6 +10,10 @@
 
 #include "tkdata.h"
 
+/**
+ * @brief The SettingsDialog class is a dialog popup used to configure the mdi child data.
+ * The data are : The tokilevel size, the music, the eggs animation, the shoebox, the actions
+ */
 class SettingsDialog : public QDialog
 {
   Q_OBJECT
