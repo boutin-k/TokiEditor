@@ -20,6 +20,8 @@ Each level is stored in a binary file containing:
 
 > The editor is developed through Ubuntu and has been tested on Windows 10.
 
+The game is also available [here](https://github.com/boutin-k/Toki).
+
 ![](https://github.com/boutin-k/TokiEditor/blob/main/screenshots/image1.png)
 
 ![](https://github.com/boutin-k/TokiEditor/blob/main/screenshots/image2.png)
