@@ -6,7 +6,7 @@ Developed via the Qt 5.15.2 framework from the MDI base.
 The application is composed of :
 
 * A left dock containing the tiles of the map (ranged by category).
-* A central zone used to display the levels editor.
+* A central zone used to display the levels edited.
 
 Each level is stored in a binary file containing:
 
