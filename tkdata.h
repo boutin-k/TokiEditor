@@ -23,10 +23,10 @@ enum TkLayer : uint32_t { ground, background, foreground, layerCount };
 
 struct __attribute__((__packed__)) levelData {
   // clang-format off
-  uint32_t magicNumber = {0U};
-  uint32_t version     = {0U};
-  uint32_t gridWidth   = {0U};
-  uint32_t gridHeight  = {0U};
+  uint32_t magicNumber = {tkMagicNumber};
+  uint32_t version     = {tkVersion};
+  uint32_t gridWidth   = {tkGridMinWidth};
+  uint32_t gridHeight  = {tkGridMinHeight};
   char tileFile[128]   = {0};
   char backFile[128]   = {0};
   char eggsFile[128]   = {0};

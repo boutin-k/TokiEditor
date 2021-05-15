@@ -14,7 +14,7 @@
  * @brief Constructor
  * @param[in] parent Parent widget
  */
-SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent), buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel) {
+SettingsDialog::SettingsDialog(QWidget *parent, bool newFile) : QDialog(parent), buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel) {
   connect(&buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
   connect(&buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
@@ -31,6 +31,11 @@ SettingsDialog::SettingsDialog(QWidget *parent) : QDialog(parent), buttonBox(QDi
     mainLayout->addWidget(&buttonBox);
   }
   setLayout(mainLayout);
+
+  if (newFile) {
+    levelXSpinBox.setDisabled(true);
+    levelYSpinBox.setDisabled(true);
+  }
 
   setMinimumWidth(400);
   setWindowTitle(tr("Level Settings"));

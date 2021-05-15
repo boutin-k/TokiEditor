@@ -24,7 +24,6 @@ TkGridItem::TkGridItem(const QString& text, QWidget* parent,
                          Qt::WindowFlags flags)
     : TkLabel(text, parent, flags) {
   installEventFilter(this);
-  setProperty("tile", 0xFF);
   setAttribute(Qt::WA_Hover);
   setStyleSheet(sGreyHoverBackground);
   drawPixmap();
@@ -51,11 +50,10 @@ TkGridItem::~TkGridItem() {}
 bool TkGridItem::clearPixmapLayer(uint32_t index) {
   bool updated = false;
 
-  uint32_t tile = property("tile").toUInt();
-  uint32_t newValue = (tile & ~TkGridItem::layerMask[index]) +
+  uint32_t newValue = (mTile & ~TkGridItem::layerMask[index]) +
                       (0xFF & TkGridItem::layerMask[index]);
-  if (newValue != tile) {
-    setProperty("tile", newValue);
+  if (newValue != mTile) {
+    setTile(newValue);
     layer[index] = QPixmap();
     drawPixmap();
 
@@ -77,13 +75,12 @@ bool TkGridItem::updatePixmapLayer(const QPixmap& pixmap, uint32_t index,
                                    uint32_t tile, bool forceUpdate) {
   bool updated = false;
 
-  uint32_t currentValue = property("tile").toUInt();
   if (index < TkLayer::layerCount) {
-    uint32_t newValue = ((currentValue & ~TkGridItem::layerMask[index]) | (tile << index * 8));
-    if (newValue != currentValue || forceUpdate) {
+    uint32_t newValue = ((mTile & ~TkGridItem::layerMask[index]) | (tile << index * 8));
+    if (newValue != mTile || forceUpdate) {
       layer[index] = pixmap;
       drawPixmap();
-      setProperty("tile", newValue);
+      setTile(newValue);
 
       updated = true;
     }

@@ -312,9 +312,11 @@ void MdiChild::mouseButtonEvent(QWidget *w, QMouseEvent *ev) {
 
 /**
  * @brief Create a new mdi window
+ * @param[in] d The new data
  */
-void MdiChild::newFile()
-{
+void MdiChild::newFile(const levelData &d) {
+  // Update data and build the grid
+  data = d;
   buildGrid();
 
   static int sequenceNumber = 1;
@@ -322,9 +324,6 @@ void MdiChild::newFile()
   untitled = true;
   curFile = tr("level%1.tokilevel").arg(sequenceNumber++);
   setWindowTitle(curFile + "[*]");
-
-  data.magicNumber = tkMagicNumber;
-  data.version = tkVersion;
 //    connect(document(), &QTextDocument::contentsChanged,
 //            this, &MdiChild::documentWasModified);
 }
@@ -386,7 +385,8 @@ bool MdiChild::loadFile(const QString &fileName)
     for (ulong i = 0ULL; i < nbTiles; ++i) {
       QLayoutItem *item =
           gridLayout->itemAtPosition(i / data.gridWidth, i % data.gridWidth);
-      item->widget()->setProperty("tile", level[i]);
+      TkGridItem *gridItem = static_cast<TkGridItem *>(item->widget());
+      gridItem->setTile(level[i]);
     }
 
     updateShoebox();
@@ -452,7 +452,8 @@ bool MdiChild::saveFile(const QString &fileName)
       for (ulong i = 0ULL; i < levelMap.size(); ++i) {
         QLayoutItem *item = gridLayout->itemAtPosition(i / data.gridWidth,
                                                        i % data.gridWidth);
-        levelMap[i] = item->widget()->property("tile").toUInt();
+        TkGridItem *gridItem = static_cast<TkGridItem *>(item->widget());
+        levelMap[i] = gridItem->getTile();
       }
       if (file.write((const char *)levelMap.data(), levelMap.size() << 2) != qint64(levelMap.size() << 2)) {
         errorMessage = "Cannot write map content";

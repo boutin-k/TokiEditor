@@ -10,6 +10,7 @@
 class TkGridItem : public TkLabel
 {
   Q_OBJECT
+  Q_PROPERTY(uint tile MEMBER mTile READ getTile WRITE setTile)
 
  public:
   explicit TkGridItem(QWidget* parent = nullptr,
@@ -35,6 +36,9 @@ class TkGridItem : public TkLabel
     if (update) drawPixmap();
   }
 
+  inline uint getTile() { return mTile; }
+  inline void setTile(uint tile) { mTile = tile; }
+
  private:
   void drawPixmap();
 
@@ -45,6 +49,8 @@ class TkGridItem : public TkLabel
 
   static constexpr auto sTransHoverBackground{":hover {background-color: rgba(127, 127, 127, 0)}"};
   static constexpr auto sGreyHoverBackground{":hover {background-color: rgba(127, 127, 127, 127)}"};
+
+  uint mTile{0xFF};
 };
 
 #endif // TKGRIDITEM_H

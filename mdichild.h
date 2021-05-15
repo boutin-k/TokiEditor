@@ -40,7 +40,7 @@ class MdiChild : public QWidget
   MdiChild();
   virtual ~MdiChild();
 
-  void newFile();
+  void newFile(const levelData &data);
   bool loadFile(const QString &fileName);
   bool save();
   bool saveAs();

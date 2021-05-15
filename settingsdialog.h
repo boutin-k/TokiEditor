@@ -38,7 +38,7 @@ class SettingsDialog : public QDialog
 
 
  public:
-  SettingsDialog(QWidget *parent = nullptr);
+  SettingsDialog(QWidget *parent = nullptr, bool newFile = false);
 
   inline void setData(const levelData &d) {
     data = d;

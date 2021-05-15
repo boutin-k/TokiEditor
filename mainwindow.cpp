@@ -77,14 +77,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
  */
 void MainWindow::newFile()
 {
-  SettingsDialog *settingsDialog = new SettingsDialog(this);
+  SettingsDialog *settingsDialog = new SettingsDialog(this, true);
   connect(settingsDialog, &SettingsDialog::finished, this,
           [this, settingsDialog](int result) {
             if (result == QDialog::Accepted) {
               MdiChild *child = createMdiChild();
               if (nullptr != child) {
-                child->setData(settingsDialog->getData());
-                child->newFile();
+                child->newFile(settingsDialog->getData());
                 child->show();
               }
 
@@ -140,7 +139,7 @@ bool MainWindow::loadFile(const QString &fileName)
       TkGridItem *item =
           static_cast<TkGridItem *>(childLayout->itemAt(idx)->widget());
       if (item != nullptr) {
-        uint32_t tile = item->property("tile").toUInt();
+        uint32_t tile = item->getTile();
         if (tile != 0xFF) {
           uint32_t groundTile = tile & 0xFF;
           if (groundTile < 0xFD) {
@@ -442,7 +441,7 @@ void MainWindow::mdiChildItemClicked(TkGridItem *item, Qt::MouseButton button) {
       break;
     }
     case Qt::RightButton: {
-      if ((index == 0) && (item->property("item").toUInt()&0xFF) == 0xFD)
+      if ((index == 0) && (item->getTile()&0xFF) == 0xFD)
         activeMdiChild()->setTokiTile(nullptr);
 
       if (item->clearPixmapLayer(index))
